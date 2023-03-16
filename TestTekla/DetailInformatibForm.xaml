@@ -1,0 +1,67 @@
+﻿<Window x:Class="TestTekla.DetailInformatibForm"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TestTekla"
+        mc:Ignorable="d" Height="403.88" Width="599.986" Loaded="Window_Loaded" ResizeMode="NoResize">
+    <Grid Margin="0,0,-6,2">
+        <DataGrid x:Name="dataGrid" HorizontalAlignment="Left" VerticalAlignment="Top" Height="304" Width="594" CanUserAddRows="False" SelectionUnit="FullRow">
+
+            <DataGrid.Columns>
+                <DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn.HeaderTemplate>
+                        <DataTemplate>
+                            <CheckBox Content="全选" IsChecked="False" Click="CheckBox_Click"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.HeaderTemplate>
+
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox  Loaded="CheckBox_Loaded" ></CheckBox>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Width="Auto" Header="截面" Binding="{Binding ProfileName}"  IsReadOnly="True"  />
+                <DataGridTextColumn Width="Auto" Header="整料编号" Binding="{Binding MateriAllNumber}" IsReadOnly="True"  />
+                <DataGridTextColumn Width="Auto" Header="利用率" Binding="{Binding Rate}" IsReadOnly="True"  />
+                <!--<DataGridTextColumn Width="Auto" Header="整料长度" Binding="{Binding MateriAllLength}" IsReadOnly="True"  />-->
+                <DataGridTextColumn Width="Auto" Header="废料长度" Binding="{Binding WasteLength}" IsReadOnly="True"  />
+                <DataGridTextColumn Width="Auto" Header="长度分布" Binding="{Binding LengthList}" IsReadOnly="True"  />
+                <DataGridTextColumn Width="Auto" Header="ID分布" Binding="{Binding IdList}" IsReadOnly="True"  />
+                <DataGridTextColumn Width="Auto" Header="材料分布" Binding="{Binding MateriList}" IsReadOnly="True"  />
+                <DataGridTextColumn Width="Auto" Header="重量分布" Binding="{Binding WeightList}" IsReadOnly="True"  />
+                <DataGridTemplateColumn Header="操作"   Width="50">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <Button Content="删除" Tag="{Binding ProfileName}" Click="Button_Click"  Width="50"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+            </DataGrid.Columns>
+
+
+
+        </DataGrid>
+        <Button x:Name="button" Content="删除选中" HorizontalAlignment="Left" Margin="10,325,0,0" VerticalAlignment="Top" Width="75" Click="button_Click_1"/>
+        <Button x:Name="button3" Content="筛选利用率：" HorizontalAlignment="Left" Margin="353,326,0,0" VerticalAlignment="Top" Width="75" Click="button3_Click"/>
+        <TextBox x:Name="textBox2" HorizontalAlignment="Left" Height="23" Margin="451,324,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.5,0.5">
+            <TextBox.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform/>
+                    <SkewTransform/>
+                    <RotateTransform Angle="-0.503"/>
+                    <TranslateTransform/>
+                </TransformGroup>
+            </TextBox.RenderTransform>
+        </TextBox>
+
+
+
+    </Grid>
+</Window>

@@ -1,0 +1,20 @@
+﻿<Window x:Class="TestTekla.StartForm"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TestTekla"
+        mc:Ignorable="d"
+        Title="选择界面" Height="198.845" Width="412.77">
+    <Grid Margin="0,0,2,-4">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="11*"/>
+            <ColumnDefinition Width="20*"/>
+        </Grid.ColumnDefinitions>
+        <Button x:Name="button" Content="自动套料并生成NCX机加工文件" HorizontalAlignment="Left" Margin="16,29,0,0" VerticalAlignment="Top" Width="179" RenderTransformOrigin="0.336,0.53" Height="38" Click="button_Click" Grid.ColumnSpan="2"/>
+        <Button x:Name="button_Copy" Content="生成选中的单构件NCX" HorizontalAlignment="Left" Margin="16,90,0,0" VerticalAlignment="Top" Width="179" RenderTransformOrigin="0.336,0.53" Height="38" Click="button_Copy_Click" Grid.ColumnSpan="2"/>
+        <Label x:Name="label" Content="起始偏移(mm)：" HorizontalAlignment="Left" Margin="74.144,36,0,0" VerticalAlignment="Top" Grid.Column="1"/>
+        <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" Margin="173.144,38,0,0" TextWrapping="Wrap" Text="4" VerticalAlignment="Top" Width="36" Grid.Column="1"/>
+
+    </Grid>
+</Window>

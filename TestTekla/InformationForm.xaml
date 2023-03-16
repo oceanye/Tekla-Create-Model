@@ -1,0 +1,43 @@
+﻿<Window x:Class="TestTekla.InformationForm"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TestTekla"
+        mc:Ignorable="d"
+        Title="截面信息统计" Height="382.356" Width="865.6" Loaded="Window_Loaded" ResizeMode="NoResize">
+    <Grid Margin="0,0,4,0" >
+        <DataGrid x:Name="dataGrid" HorizontalAlignment="Left" VerticalAlignment="Top" Height="290" Width="Auto" CanUserAddRows="False" SelectionUnit="FullRow">
+            <!--<DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <EventSetter Event="GotFocus" Handler="Item_GotFocus"  />
+                </Style>
+            </DataGrid.RowStyle>-->
+            <DataGrid.Columns>
+                <!--<DataGridCheckBoxColumn Width="20"/>-->
+                <DataGridTextColumn Width="150" Header="截面" Binding="{Binding ProfileName}"  IsReadOnly="True"  />
+                <DataGridTextColumn Width="100" Header="平均利用率" Binding="{Binding AverageRate}" IsReadOnly="True"  />
+                <DataGridTextColumn Width="150" Header="材料" Binding="{Binding MaterialName}" IsReadOnly="True"  />
+                <DataGridTextColumn Width="100" Header="整料根数" Binding="{Binding Number}" IsReadOnly="True"  />
+                <DataGridTextColumn Width="100" Header="其他" Binding="{Binding Other}" IsReadOnly="True"  />
+                <DataGridTemplateColumn Header="操作" Width="50">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <Button Content="详情" Tag="{Binding ProfileName}" Click="Button_Click" Width="50"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+        <Button x:Name="button" Content="刷新" HorizontalAlignment="Left" Margin="729,10,0,0" VerticalAlignment="Top" Width="75" Click="button_Click_1"/>
+        <Button x:Name="button1" Content="生成套料清单" HorizontalAlignment="Left" Margin="729,82,0,0" VerticalAlignment="Top" Width="75" Click="button1_Click"/>
+        <Button x:Name="button2" Content="生成NCX文件" HorizontalAlignment="Left" Margin="729,141,0,0" VerticalAlignment="Top" Width="75" Click="button2_Click"/>
+        <Label x:Name="label" Content="完成套料构件根数：" HorizontalAlignment="Left" Margin="16,307,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label1" Content="套料根数：" HorizontalAlignment="Left" Margin="353,307,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" Margin="139,309,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
+        <TextBox x:Name="textBox1" HorizontalAlignment="Left" Height="23" Margin="428,309,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
+
+    </Grid>
+</Window>

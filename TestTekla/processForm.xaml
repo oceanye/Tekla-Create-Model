@@ -1,0 +1,13 @@
+﻿<Window x:Class="TestTekla.processForm"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TestTekla"
+        mc:Ignorable="d"
+        Title="processForm" Height="111.2" Width="228">
+    <Grid Margin="0,0,9,9">
+        <Label x:Name="label" Content="正在生成。。。。" HorizontalAlignment="Left" Margin="35,25,0,0" VerticalAlignment="Top"/>
+
+    </Grid>
+</Window>
