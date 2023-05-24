@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.32602.291
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeklaPlug", "..\TeklaPlug\TeklaPlug.csproj", "{E69B3F5B-EE5B-459B-B535-96914F95936E}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tekla_Model-Create_Tekla_Model", "CreateModuel\Tekla_Model-Create_Tekla_Model.csproj", "{A073F518-1013-4A07-9F37-6DE6C35A93DE}"
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "CreateTeklaModelSetup", "CreateModuelSetup\CreateModuelSetup.vdproj", "{6A3D9CE3-4C7B-424A-9303-9B1D443CC40F}"
@@ -15,10 +13,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E69B3F5B-EE5B-459B-B535-96914F95936E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E69B3F5B-EE5B-459B-B535-96914F95936E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E69B3F5B-EE5B-459B-B535-96914F95936E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E69B3F5B-EE5B-459B-B535-96914F95936E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A073F518-1013-4A07-9F37-6DE6C35A93DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A073F518-1013-4A07-9F37-6DE6C35A93DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A073F518-1013-4A07-9F37-6DE6C35A93DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
