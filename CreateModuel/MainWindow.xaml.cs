@@ -36,7 +36,7 @@ namespace TestTekla
         }
 
 
-       public string DbPath = @" Y:\数字化课题\";
+       public string DbPath = @"C:\ProgramData\Autodesk\Revit\Addins\2018";
 
         
 
@@ -50,6 +50,21 @@ namespace TestTekla
 
         private void button_Click(object sender, RoutedEventArgs e)
         {
+
+            bool PIP_in_Centre = (bool)checkbox_PIP_CENTRE.IsChecked;
+
+
+            Generate_Model();
+            if(PIP_in_Centre)
+            {
+                Modify_PIP_position();
+            }
+            
+        }
+
+
+        public void Generate_Model()
+        {
             string f_path = DbPath;
             if (Directory.Exists(f_path) == false)
             {
@@ -57,7 +72,7 @@ namespace TestTekla
 
             }
 
-            using (SQLiteConnection conn = new SQLiteConnection("Data Source = " + f_path+@"\数据库\RevitData.db"))
+            using (SQLiteConnection conn = new SQLiteConnection("Data Source = " + f_path + @"\数据库\RevitData.db"))
             {
                 conn.Open();
 
@@ -93,10 +108,10 @@ namespace TestTekla
 
                 CatalogHandler CatalogHandler = new CatalogHandler();
 
-                
 
-               ProfileItemEnumerator ProfileItemEnumerator = CatalogHandler.GetLibraryProfileItems();
-               MaterialItemEnumerator MaterialItemEn= CatalogHandler.GetMaterialItems();
+
+                ProfileItemEnumerator ProfileItemEnumerator = CatalogHandler.GetLibraryProfileItems();
+                MaterialItemEnumerator MaterialItemEn = CatalogHandler.GetMaterialItems();
 
 
 
@@ -135,10 +150,10 @@ namespace TestTekla
 
                 }
 
-                if(PList.Count>0)
+                if (PList.Count > 0)
                 {
                     Model myModel = new Model();
-                    string path = myModel.GetInfo().ModelPath+"\\";
+                    string path = myModel.GetInfo().ModelPath + "\\";
                     CreateText(path, PList);
                     //ShowForm sf = new TestTekla.ShowForm(PList);
                     //sf.ShowDialog();
@@ -199,9 +214,9 @@ namespace TestTekla
 
                 for (int i = 0; i < tableGrid.Rows.Count; i++)
                 {
-                    Z += tableGrid.Rows[i].ItemArray[2].ToString()+" ";
+                    Z += tableGrid.Rows[i].ItemArray[2].ToString() + " ";
 
-                    LabelZ+= tableGrid.Rows[i].ItemArray[1].ToString() + " ";
+                    LabelZ += tableGrid.Rows[i].ItemArray[1].ToString() + " ";
                 }
 
 
@@ -244,12 +259,16 @@ namespace TestTekla
                 MonitorCheck form = new MonitorCheck();
                 form.Show();
                 int T = 0;
+
+                int Rec_hole = 0;
+                int Cir_hole = 0;
+
                 for (int i = 0; i < tableBeam.Rows.Count; i++)
                 {
                     T++;
                     form.SetTextMesssage(T, tableBeam.Rows.Count);//进度条函数
 
-               
+
                     #region
                     Beam beam = new Beam();
 
@@ -257,18 +276,22 @@ namespace TestTekla
 
                     string endStr = tableBeam.Rows[i].ItemArray[2].ToString().Substring(1, tableBeam.Rows[i].ItemArray[2].ToString().Length - 2);
 
-                    Tekla.Structures.Geometry3d.Point SPoint= new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(startStr.Split(',')[0]), Convert.ToDouble(startStr.Split(',')[1]), Convert.ToDouble(startStr.Split(',')[2]));
+                    Tekla.Structures.Geometry3d.Point SPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(startStr.Split(',')[0]), Convert.ToDouble(startStr.Split(',')[1]), Convert.ToDouble(startStr.Split(',')[2]));
 
-                    Tekla.Structures.Geometry3d.Point EPoint= new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(endStr.Split(',')[0]), Convert.ToDouble(endStr.Split(',')[1]), Convert.ToDouble(endStr.Split(',')[2]));
+                    Tekla.Structures.Geometry3d.Point EPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(endStr.Split(',')[0]), Convert.ToDouble(endStr.Split(',')[1]), Convert.ToDouble(endStr.Split(',')[2]));
 
-                    string ProfileBeam = tableBeam.Rows[i].ItemArray[3].ToString().Split(' ')[2].Replace('X', '*');
+                    string section_name = tableBeam.Rows[i].ItemArray[3].ToString();
+                    string ProfileBeam = section_name.Split(' ')[2].Replace('X', '*');
                     string MaterialBeam = tableBeam.Rows[i].ItemArray[17].ToString();
 
                     Tekla.Structures.Geometry3d.Point VectorPoint = new Tekla.Structures.Geometry3d.Point(EPoint.X - SPoint.X, EPoint.Y - SPoint.Y, EPoint.Z - SPoint.Z);
 
-                   
 
 
+                    if (ProfileBeam.StartsWith("T"))
+                    {
+                        Output_Text.AppendText("存在T型截面，需核对构件方向");
+                    }
                     beam.StartPoint = GetNewStartPoint(SPoint, VectorPoint, Convert.ToDouble(tableBeam.Rows[i].ItemArray[11]));
 
                     beam.EndPoint = GetNewStartPoint(EPoint, VectorPoint, Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]));
@@ -293,17 +316,17 @@ namespace TestTekla
                             flag++;
                         }
                     }
-                    if(flag==0)
+                    if (flag == 0)
                     {
                         beam.Material.MaterialString = "Q235B";
                     }
 
 
-                   
+
                     beam.Class = "3";
 
-                   
-                    if (comboBox.SelectionBoxItem.ToString()=="是")
+
+                    if (comboBox.SelectionBoxItem.ToString() == "是")
                     {
                         beam.StartPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[11]);
                         beam.EndPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]);
@@ -315,18 +338,18 @@ namespace TestTekla
 
 
 
-                    if (beam.Profile.ProfileString!="")
+                    if (beam.Profile.ProfileString != "")
                     {
                         beam.Insert();
 
-                     
+
                     }
-                  
+
 
                     #region 测试
 
-                 
-                    beam.SetUserProperty("comment","1");
+
+                    beam.SetUserProperty("comment", "1");
                     #endregion
 
                     #region 交点
@@ -360,6 +383,8 @@ namespace TestTekla
                         }
                     }
 
+                    
+
                     #endregion
 
                     #endregion
@@ -367,76 +392,132 @@ namespace TestTekla
                     #region 孔洞
 
                     string sqlHole = "SELECT*FROM BeamHoleTable";
-                    DataTable holetable= getData(sqlHole, cmd);
+                    DataTable holetable = getData(sqlHole, cmd);
 
 
                     for (int x = 0; x < holetable.Rows.Count; x++)
                     {
-                        if(holetable.Rows[x].ItemArray[5].ToString().Equals(tableBeam.Rows[i].ItemArray[0].ToString()))
+                        if (holetable.Rows[x].ItemArray[5].ToString().Equals(tableBeam.Rows[i].ItemArray[0].ToString()))
                         {
 
+                            ContourPlate CP = new ContourPlate();
 
-                            string p1 = holetable.Rows[x].ItemArray[1].ToString().Substring(1, holetable.Rows[x].ItemArray[1].ToString().Length - 2);
-                            string p2 = holetable.Rows[x].ItemArray[2].ToString().Substring(1, holetable.Rows[x].ItemArray[2].ToString().Length - 2);
-                            string p3 = holetable.Rows[x].ItemArray[3].ToString().Substring(1, holetable.Rows[x].ItemArray[3].ToString().Length - 2);
-                            string p4 = holetable.Rows[x].ItemArray[4].ToString().Substring(1, holetable.Rows[x].ItemArray[4].ToString().Length - 2);
-
-                        
-
-
-                            Tekla.Structures.Geometry3d.Point Pt1 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p1.Split(',')[0]), Convert.ToDouble(p1.Split(',')[1]), Convert.ToDouble(p1.Split(',')[2]) + beam.StartPointOffset.Dz);
-                            Tekla.Structures.Geometry3d.Point Pt2 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p2.Split(',')[0]), Convert.ToDouble(p2.Split(',')[1]), Convert.ToDouble(p2.Split(',')[2]) + beam.StartPointOffset.Dz);
-                            Tekla.Structures.Geometry3d.Point Pt3 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p3.Split(',')[0]), Convert.ToDouble(p3.Split(',')[1]), Convert.ToDouble(p3.Split(',')[2]) + beam.StartPointOffset.Dz);
-                            Tekla.Structures.Geometry3d.Point Pt4 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p4.Split(',')[0]), Convert.ToDouble(p4.Split(',')[1]), Convert.ToDouble(p4.Split(',')[2]) + beam.StartPointOffset.Dz);
-
-                            if (Pt1 != Pt2)
+                            if (holetable.Rows[x].ItemArray[1].ToString().Contains("@"))// 存在@
                             {
+                                // 中心点
+                                string pc = holetable.Rows[x].ItemArray[1].ToString().Split('@')[1];
+                                pc = pc.Substring(1, pc.Length - 2);
 
-                                ContourPoint point = new ContourPoint(Pt1, null);
-                                ContourPoint point1 = new ContourPoint(Pt2, null);
-                                ContourPoint point2 = new ContourPoint(Pt3, null);
-                                ContourPoint point3 = new ContourPoint(Pt4, null);
+                                // 法线方向
+                                string n1s = holetable.Rows[x].ItemArray[1].ToString().Split('@')[2];
+                                n1s = n1s.Substring(1, n1s.Length - 2);
 
-                                ContourPlate CP = new ContourPlate();
-                                CP.AddContourPoint(point);
-                                CP.AddContourPoint(point1);
-                                CP.AddContourPoint(point2);
-                                CP.AddContourPoint(point3);
-
-                                CP.Finish = "FOO";
-                                CP.Profile.ProfileString = "PL200";
-                                CP.Material.MaterialString = "K30-2";
-                                CP.Class = BooleanPart.BooleanOperativeClassName;
+                                //半径
+                                double rc = Convert.ToDouble(holetable.Rows[x].ItemArray[1].ToString().Split('@')[0]);
+                                Tekla.Structures.Geometry3d.Point center = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(pc.Split(',')[0]), Convert.ToDouble(pc.Split(',')[1]), Convert.ToDouble(pc.Split(',')[2]) + beam.StartPointOffset.Dz);
 
 
-                                CP.Insert();
-                                BooleanPart Beam = new BooleanPart();
+                                double halfSideLength = rc / Math.Sqrt(2);
 
-                                Beam.Father = beam;
+                                Tekla.Structures.Geometry3d.Vector n1 = new Tekla.Structures.Geometry3d.Vector(Convert.ToDouble(n1s.Split(',')[0]), Convert.ToDouble(n1s.Split(',')[1]), Convert.ToDouble(n1s.Split(',')[2]));
 
-                                Beam.SetOperativePart(CP);
 
-                                Beam.Insert();
-                                CP.Delete();
+                                // 根据法向量计算矩形的四个点
+                                // 根据法向量计算矩形的四个点
+                                Tekla.Structures.Geometry3d.Vector rightDirection = n1.Cross(new Tekla.Structures.Geometry3d.Vector(0, 0, 1)).GetNormal();
+                                Tekla.Structures.Geometry3d.Vector upDirection = n1.Cross(rightDirection).GetNormal();
+
+                                Tekla.Structures.Geometry3d.Point p1 = center + rightDirection * halfSideLength - upDirection * halfSideLength;
+                                Tekla.Structures.Geometry3d.Point p2 = center + rightDirection * halfSideLength + upDirection * halfSideLength;
+                                Tekla.Structures.Geometry3d.Point p3 = center - rightDirection * halfSideLength + upDirection * halfSideLength;
+                                Tekla.Structures.Geometry3d.Point p4 = center - rightDirection * halfSideLength - upDirection * halfSideLength;
+
+
+
+                                // 创建切角对象
+                                Chamfer chamfer = new Chamfer(0, 0, Chamfer.ChamferTypeEnum.CHAMFER_ROUNDING);
+
+                                // 在添加轮廓点时为其设置切角
+                                CP.AddContourPoint(new ContourPoint(p4, chamfer));
+                                CP.AddContourPoint(new ContourPoint(p3, chamfer));
+                                CP.AddContourPoint(new ContourPoint(p2, chamfer));
+                                CP.AddContourPoint(new ContourPoint(p1, chamfer));
+
+                                Cir_hole = Cir_hole + 1;
+
                             }
+                            else
+                            {
+                                string p1 = holetable.Rows[x].ItemArray[1].ToString().Substring(1, holetable.Rows[x].ItemArray[1].ToString().Length - 2);
+                                string p2 = holetable.Rows[x].ItemArray[2].ToString().Substring(1, holetable.Rows[x].ItemArray[2].ToString().Length - 2);
+                                string p3 = holetable.Rows[x].ItemArray[3].ToString().Substring(1, holetable.Rows[x].ItemArray[3].ToString().Length - 2);
+                                string p4 = holetable.Rows[x].ItemArray[4].ToString().Substring(1, holetable.Rows[x].ItemArray[4].ToString().Length - 2);
+
+
+
+
+                                Tekla.Structures.Geometry3d.Point Pt1 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p1.Split(',')[0]), Convert.ToDouble(p1.Split(',')[1]), Convert.ToDouble(p1.Split(',')[2]) + beam.StartPointOffset.Dz);
+                                Tekla.Structures.Geometry3d.Point Pt2 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p2.Split(',')[0]), Convert.ToDouble(p2.Split(',')[1]), Convert.ToDouble(p2.Split(',')[2]) + beam.StartPointOffset.Dz);
+                                Tekla.Structures.Geometry3d.Point Pt3 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p3.Split(',')[0]), Convert.ToDouble(p3.Split(',')[1]), Convert.ToDouble(p3.Split(',')[2]) + beam.StartPointOffset.Dz);
+                                Tekla.Structures.Geometry3d.Point Pt4 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p4.Split(',')[0]), Convert.ToDouble(p4.Split(',')[1]), Convert.ToDouble(p4.Split(',')[2]) + beam.StartPointOffset.Dz);
+
+                                if (Pt1 != Pt2)
+                                {
+
+                                    ContourPoint point = new ContourPoint(Pt1, null);
+                                    ContourPoint point1 = new ContourPoint(Pt2, null);
+                                    ContourPoint point2 = new ContourPoint(Pt3, null);
+                                    ContourPoint point3 = new ContourPoint(Pt4, null);
+
+
+                                    CP.AddContourPoint(point);
+                                    CP.AddContourPoint(point1);
+                                    CP.AddContourPoint(point2);
+                                    CP.AddContourPoint(point3);
+
+                                    Rec_hole = Rec_hole + 1;
+                                }
+                            }
+
+                            CP.Finish = "FOO";
+                            CP.Profile.ProfileString = "PL800";
+                            CP.Material.MaterialString = "K30-2";
+                            CP.Class = BooleanPart.BooleanOperativeClassName;
+
+
+                            CP.Insert();
+                            BooleanPart Beam = new BooleanPart();
+
+                            Beam.Father = beam;
+
+                            Beam.SetOperativePart(CP);
+
+                            Beam.Insert();
+                            CP.Delete();
+
+
+
+
+
+
                         }
 
 
                     }
-                    
-                    
 
+
+                    
 
 
                     #endregion
 
-    
 
+                    model.CommitChanges();
 
                 }
 
-                model.CommitChanges();
-
+                Output_Text.AppendText("生成模型 梁:" + T + "个 \n");
+                Output_Text.AppendText("包含梁上开洞"+(Rec_hole+Cir_hole)+"个：方" + Rec_hole + "/圆" + Cir_hole+"个 \n");
 
 
                 #endregion
@@ -457,7 +538,7 @@ namespace TestTekla
                 form1.Show();
                 int T1 = 0;
 
-                for (int i=0;i<table.Rows.Count;i++)
+                for (int i = 0; i < table.Rows.Count; i++)
                 {
 
                     T1++;
@@ -465,7 +546,7 @@ namespace TestTekla
 
 
 
-                 
+
                     #region
                     Beam beam = new Beam();
 
@@ -473,13 +554,14 @@ namespace TestTekla
 
                     string endStr = table.Rows[i].ItemArray[2].ToString().Substring(1, table.Rows[i].ItemArray[2].ToString().Length - 2);
 
-                    string ProfileColumn = table.Rows[i].ItemArray[3].ToString().Split(' ')[2].Replace('X','*');
+                    string ProfileColumn_org = table.Rows[i].ItemArray[3].ToString().Split(' ')[2];
+                    string ProfileColumn = ProfileColumn_org.Replace('X', '*');
 
                     string MaterialColumn = table.Rows[i].ItemArray[11].ToString();
 
                     beam.StartPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(startStr.Split(',')[0]), Convert.ToDouble(startStr.Split(',')[1]), Convert.ToDouble(startStr.Split(',')[2]));
 
-                     beam.EndPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(endStr.Split(',')[0]), Convert.ToDouble(endStr.Split(',')[1]), Convert.ToDouble(endStr.Split(',')[2]));
+                    beam.EndPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(endStr.Split(',')[0]), Convert.ToDouble(endStr.Split(',')[1]), Convert.ToDouble(endStr.Split(',')[2]));
 
                     beam.Profile.ProfileString = "";
 
@@ -490,7 +572,7 @@ namespace TestTekla
                             beam.Profile.ProfileString = ProfileColumn;
                         }
                     }
-                    
+
                     beam.Position.Plane = Position.PlaneEnum.MIDDLE;
 
                     beam.Position.Depth = Position.DepthEnum.MIDDLE;
@@ -498,8 +580,8 @@ namespace TestTekla
 
                     beam.Position.Rotation = Position.RotationEnum.TOP;
 
-            
-                    beam.Position.RotationOffset =Convert.ToDouble(table.Rows[i].ItemArray[10].ToString());
+
+                    beam.Position.RotationOffset = Convert.ToDouble(table.Rows[i].ItemArray[10].ToString());
 
 
                     int flag = 0;
@@ -528,16 +610,21 @@ namespace TestTekla
 
                     #endregion
 
+
+                    modelCo.CommitChanges();
                 }
 
-                modelCo.CommitChanges();
+                Output_Text.AppendText("生成模型 柱:" + T1 + "个");
 
                 #endregion
 
 
                 conn.Close();
 
-     
+
+
+
+
             }
 
 
@@ -546,11 +633,44 @@ namespace TestTekla
 
 
 
-            Close();
+            //Close();
 
 
 
 
+        }
+
+
+        public void Modify_PIP_position()
+        {
+
+            try
+            {
+                Model model = new Model();
+
+                ModelObjectEnumerator modelObjectEnumerator = new Model().GetModelObjectSelector().GetAllObjectsWithType(Tekla.Structures.Model.ModelObject.ModelObjectEnum.BEAM);
+                while (modelObjectEnumerator.MoveNext())
+                {
+                    Beam b = modelObjectEnumerator.Current as Beam;
+                    if (b != null)
+                    {
+
+                            if (b.Profile.ProfileString.StartsWith("P"))
+                            {
+                                b.Position.Depth = Position.DepthEnum.MIDDLE;
+                                b.Modify();
+                            }
+
+                    }
+                }
+
+                model.CommitChanges();
+                Console.WriteLine("Modified PIP sections successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred: " + ex.Message);
+            }
 
         }
 
@@ -598,25 +718,67 @@ namespace TestTekla
                         sw.WriteLine("}");
                         sw.WriteLine("");
                        }
-                if (section_type == 'B')
-                {
-                    double H = Convert.ToDouble(profileName.Split('*')[0].Substring(1));
-                    double W = Convert.ToDouble(profileName.Split('*')[1]);
-                    double F = Convert.ToDouble(profileName.Split('*')[2]);
-                    //double Y = Convert.ToDouble(profileName.Split('*')[3]);
+                    else if (section_type == 'B')
+                        {
+                            double H = Convert.ToDouble(profileName.Split('*')[0].Substring(1));
+                            double W = Convert.ToDouble(profileName.Split('*')[1]);
+                            double F = Convert.ToDouble(profileName.Split('*')[2]);
+                            //double Y = Convert.ToDouble(profileName.Split('*')[3]);
 
-                    sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
-                    sw.WriteLine("{");
-                    sw.WriteLine("  TYPE = 8; SUB_TYPE = 8002; COORDINATE = 0.000;");
-                    sw.WriteLine("  {");
-                    sw.WriteLine("    \"HEIGHT\"" + "                           " + H);
-                    sw.WriteLine("    \"WIDTH\"" + "                           " + W);
-                    sw.WriteLine("    \"PLATE_THICKNESS\"" + "                           " + F);
-                    sw.WriteLine("    \"ROUNDING_RADIUS\"" + "                           " + "1.000000000E+001");
-                    sw.WriteLine("  }");
-                    sw.WriteLine("}");
-                    sw.WriteLine("");
-                }
+                            sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
+                            sw.WriteLine("{");
+                            sw.WriteLine("  TYPE = 8; SUB_TYPE = 8002; COORDINATE = 0.000;");
+                            sw.WriteLine("  {");
+                            sw.WriteLine("    \"HEIGHT\"" + "                           " + H);
+                            sw.WriteLine("    \"WIDTH\"" + "                           " + W);
+                            sw.WriteLine("    \"PLATE_THICKNESS\"" + "                           " + F);
+                            sw.WriteLine("    \"ROUNDING_RADIUS\"" + "                           " + "1.000000000E+001");
+                            sw.WriteLine("  }");
+                            sw.WriteLine("}");
+                            sw.WriteLine("");
+                        }
+                    else if (section_type == 'P')
+                        {
+                            double D = Convert.ToDouble(profileName.Split('*')[0].Substring(1));
+                            double t = Convert.ToDouble(profileName.Split('*')[1]);
+
+
+                            sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
+                            sw.WriteLine("{");
+                            sw.WriteLine("  TYPE = 7; SUB_TYPE = 7001; COORDINATE = 0.000;");
+                            sw.WriteLine("  {");
+                            sw.WriteLine("    \"DIAMETER\"" + "                           " + D);
+                            sw.WriteLine("    \"PLATE_THICKNESS\"" + "                           " + t);
+                            sw.WriteLine("  }");
+                            sw.WriteLine("}");
+                            sw.WriteLine("");
+                        }
+                    else if (section_type == 'T')
+                        {
+                            double H = Convert.ToDouble(profileName.Split('*')[0].Substring(1));
+                            double W = Convert.ToDouble(profileName.Split('*')[1]);
+                            double F = Convert.ToDouble(profileName.Split('*')[2]);
+                            double Y = Convert.ToDouble(profileName.Split('*')[3]);
+
+                            sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
+                            sw.WriteLine("{");
+                            sw.WriteLine("  TYPE = 10; SUB_TYPE = 10001; COORDINATE = 0.000;");
+                            sw.WriteLine("  {");
+                            sw.WriteLine("    \"HEIGHT\"" + "                           " + H);
+                            sw.WriteLine("    \"WIDTH\"" + "                           " + W);
+                            sw.WriteLine("    \"WEB_THICKNESS\"" + "                           " + F);
+                            sw.WriteLine("    \"FLANGE_THICKNESS\"" + "                           " + Y);
+                            sw.WriteLine("    \"ROUNDING_RADIUS_1\"" + "                           " + "0.000000000E+000");
+                            sw.WriteLine("    \"ROUNDING_RADIUS_2\"" + "                           " + "0.000000000E+000");
+                            sw.WriteLine("    \"FLANGE_SLOPE_RATIO\"" + "                           " + "0.000000000E+000");
+                            sw.WriteLine("  }");
+                            sw.WriteLine("}");
+                            sw.WriteLine("");
+                        }
+
+
+
+
 
             }
                 
@@ -685,6 +847,14 @@ namespace TestTekla
             return pt;
         }
 
+        private void comboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
 
+        }
+
+        private void Output_Text_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
     }
 }

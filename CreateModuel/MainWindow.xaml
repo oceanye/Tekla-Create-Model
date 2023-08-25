@@ -5,14 +5,17 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TestTekla"
         mc:Ignorable="d"
-        Title="生成模型 V2.0" Height="195.373" Width="400.671">
+        Title="生成模型 V3.0" Height="305.856" Width="400.671">
     <Grid Margin="0,0,2,4">
         <Button x:Name="button" Content="生成模型" HorizontalAlignment="Left" Margin="246,103,0,0" VerticalAlignment="Top" Width="106" Height="28" Click="button_Click"/>
-        <ComboBox x:Name="comboBox" HorizontalAlignment="Left" Margin="142,23,0,0" VerticalAlignment="Top" Width="120" SelectedIndex="0">
+        <ComboBox x:Name="comboBox" HorizontalAlignment="Left" Margin="142,23,0,0" VerticalAlignment="Top" Width="120" SelectedIndex="1" SelectionChanged="comboBox_SelectionChanged">
             <ComboBoxItem Content="是"/>
             <ComboBoxItem Content="否"/>
         </ComboBox>
         <Label x:Name="label" Content="梁中心线是否偏移：" HorizontalAlignment="Left" Margin="19,23,0,0" VerticalAlignment="Top"/>
+        <CheckBox x:Name="checkbox_PIP_CENTRE" Content="圆管支撑调整为中心对齐" HorizontalAlignment="Left" Margin="19,70,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="Output_Text" Height="80" Margin="19,168,39,0" TextWrapping="Wrap" VerticalAlignment="Top" TextChanged="Output_Text_TextChanged" IsReadOnly="True"/>
+        <Label Content="模型信息" HorizontalAlignment="Left" Margin="19,138,0,0" VerticalAlignment="Top"/>
 
     </Grid>
 </Window>
