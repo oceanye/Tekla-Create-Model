@@ -22,6 +22,8 @@ using Tekla.Structures.Catalogs;
 using System.Collections;
 using System.IO;
 using System.Windows.Forms;
+using Point = Tekla.Structures.Geometry3d.Point;
+using Vector = Tekla.Structures.Geometry3d.Vector;
 
 namespace TestTekla
 {
@@ -196,14 +198,15 @@ namespace TestTekla
 
                 #endregion
 
-                #region 生成新轴网
+                #region 生成新标高
                 cmd.CommandText = "SELECT*FROM LevelTable";
 
-                SQLiteDataAdapter adapterGrid = new SQLiteDataAdapter(cmd);
-                DataSet dsGrid = new DataSet();
-                adapterGrid.Fill(dsGrid);
+                SQLiteDataAdapter adapterLevel = new SQLiteDataAdapter(cmd);
+                DataSet dsLevel = new DataSet();
+                adapterLevel.Fill(dsLevel);
 
-                DataTable tableGrid = dsGrid.Tables[0];
+                DataTable tableLevel = dsLevel.Tables[0];
+
                 Model modelNewGrid = new Model();
 
                 Tekla.Structures.Model.Grid grid = new Tekla.Structures.Model.Grid();
@@ -212,20 +215,116 @@ namespace TestTekla
 
                 string LabelZ = "+0 ";
 
-                for (int i = 0; i < tableGrid.Rows.Count; i++)
+                for (int i = 0; i < tableLevel.Rows.Count; i++)
                 {
-                    Z += tableGrid.Rows[i].ItemArray[2].ToString() + " ";
+                    Z += tableLevel.Rows[i].ItemArray[2].ToString() + " ";
 
-                    LabelZ += tableGrid.Rows[i].ItemArray[1].ToString() + " ";
+                    LabelZ += tableLevel.Rows[i].ItemArray[1].ToString() + " ";
                 }
 
+                #endregion
+
+                #region 生成新轴网
+                cmd.CommandText = "SELECT*FROM GridTable";
+
+                SQLiteDataAdapter adapterGrid = new SQLiteDataAdapter(cmd);
+                DataSet dsGrid = new DataSet();
+                adapterLevel.Fill(dsGrid);
+
+                DataTable tableGrid = dsGrid.Tables[0];
+
+                List<string> LabelList = new List<string>();
+                List<string> gridPointList = new List<string>();
+
+                List<List<string>> gridInfo=new List<List<string>>();
+
+
+
+                Console.WriteLine(LabelList);
+                for (int i = 0; i < tableGrid.Rows.Count; i++)
+                {
+                    string column1Value = tableGrid.Rows[i][1].ToString();
+                    string column2Value = tableGrid.Rows[i][2].ToString().Split(';')[0];
+                    string column3Value = tableGrid.Rows[i][2].ToString().Split(';')[1];
+                    
+                    List<string> row = new List<string> { column1Value, column2Value, column3Value };
+
+                    gridInfo.Add(row);
+
+                    //LabelList.Add( tableGrid.Rows[i].ItemArray[1].ToString() );
+
+                    //gridPointList.Add(tableGrid.Rows[i].ItemArray[2].ToString());
+                }
+
+                 
+                List<List<string>> letterList =new List<List<string>>();
+                List<List<string>> numberList = new List<List<string>>();
+
+                foreach (List<string> sublist in gridInfo)
+                {
+
+                    // 使用 LINQ 查询来检查元素是否包含数字
+
+                        if (ParallelAxis( sublist[1],sublist[2])==true) // 只保留平行于坐标轴的轴网 
+                        {
+                            if (sublist[0].Any(char.IsDigit))
+                            {
+                                numberList.Add(sublist);
+                            }
+                            else
+                            {
+                                letterList.Add(sublist);
+                            }
+
+                        }
+
+           
+                }
+                // letter - Y
+                // number - X
+
+                List<double> dist_letterList = new List<double>();
+                List<double> dist_numberList = new List<double>();
+
+                List<string> label_letterList = new List<string>();
+                List<string> label_numberList = new List<string>();
+
+                label_letterList = letterList.Select(sublist => sublist.First()).ToList();
+                label_numberList = numberList.Select(sublist => sublist.First()).ToList();
+
+                dist_letterList.Add(ParsePointString(letterList[0][1]).Y);
+                dist_numberList.Add(ParsePointString(numberList[0][1]).X);
+
+                for (int i =1; i<letterList.Count; i++)
+                {
+
+                    double d1 = DistaceAxis(letterList[i - 1][1], letterList[i -1][2], letterList[i][1]);
+                    dist_letterList.Add(d1);
+
+
+                }
+
+                for (int i = 1; i < numberList.Count; i++)
+                {
+
+                    double d1 = DistaceAxis(numberList[i - 1][1], numberList[i - 1][2], numberList[i][1]);
+                    dist_numberList.Add(d1);
+
+                }
+
+                //List<string> letterList;
+                //List<string> numberList;
+                //List<double> List_dist_A;
+                //List<double> List_dist_1;
+
+                //ConvertGrid(LabelList, gridPointList, out letterList, out numberList, out List_dist_A, out List_dist_1);
 
                 grid.Name = "Grid";
-                grid.CoordinateX = "0.00";
-                grid.CoordinateY = "0.00";
+                grid.CoordinateX = string.Join(" ", dist_numberList);
+                grid.CoordinateY = string.Join(" ", dist_letterList);
                 grid.CoordinateZ = Z;
-                grid.LabelX = "1";
-                grid.LabelY = "A";
+                grid.LabelX = string.Join(" ", label_numberList);
+                grid.LabelY = string.Join(" ", label_letterList);
                 grid.LabelZ = LabelZ;
 
                 grid.ExtensionLeftX = 2000;
@@ -326,12 +425,22 @@ namespace TestTekla
                     beam.Class = "3";
 
 
-                    if (comboBox.SelectionBoxItem.ToString() == "是")
+                    if (comboBox.SelectionBoxItem.ToString() == "是")// 此段可以删除，中心线始终位于钢梁翼缘顶部
                     {
                         beam.StartPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[11]);
                         beam.EndPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]);
+
                         beam.StartPointOffset.Dz = Convert.ToDouble(tableBeam.Rows[i].ItemArray[15]);
                         beam.EndPointOffset.Dz = Convert.ToDouble(tableBeam.Rows[i].ItemArray[16]);
+                    }
+                    else
+                    {
+                        //Revit导出时，设置Y项对正为 LocationLine
+                        //beam.StartPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[11]);
+                        //beam.EndPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]);
+
+                        //beam.StartPoint.Z = beam.StartPoint.Z + Convert.ToDouble(tableBeam.Rows[i].ItemArray[15]);
+                        //beam.EndPoint.Z = beam.EndPoint.Z + Convert.ToDouble(tableBeam.Rows[i].ItemArray[16]);
                     }
 
 
@@ -435,7 +544,7 @@ namespace TestTekla
 
 
                                 // 创建切角对象
-                                Chamfer chamfer = new Chamfer(0, 0, Chamfer.ChamferTypeEnum.CHAMFER_ROUNDING);
+                                Chamfer chamfer = new Chamfer(0, 0, Chamfer.ChamferTypeEnum.CHAMFER_ARC_POINT);
 
                                 // 在添加轮廓点时为其设置切角
                                 CP.AddContourPoint(new ContourPoint(p4, chamfer));
@@ -547,7 +656,7 @@ namespace TestTekla
 
 
 
-                    #region
+
                     Beam beam = new Beam();
 
                     string startStr = table.Rows[i].ItemArray[1].ToString().Substring(1, table.Rows[i].ItemArray[1].ToString().Length - 2);
@@ -608,7 +717,7 @@ namespace TestTekla
                         beam.Insert();
                     }
 
-                    #endregion
+
 
 
                     modelCo.CommitChanges();
@@ -638,6 +747,125 @@ namespace TestTekla
 
 
 
+        }
+
+
+        static void ConvertGrid(List<string> LabelList, List<string> gridPointList, out List<string> letterList, out List<string> numberList, out List<double> List_dist_A, out List<double> List_dist_1)
+        {
+            letterList = new List<string>();
+            numberList = new List<string>();
+            List_dist_A = new List<double>();
+            List_dist_1 = new List<double>();
+
+            foreach (string label in LabelList)
+            {
+                if (char.IsLetter(label[0]))
+                {
+                    letterList.Add(label);
+                }
+                else if (char.IsDigit(label[0]))
+                {
+                    numberList.Add(label);
+                }
+            }
+
+
+            List<List<string>> group = null;
+            foreach (string label in letterList)
+            {
+                group.Add(SelectCoordbyLabel(label, LabelList, gridPointList));
+            }
+
+
+            
+                   // List_dist_A.Add(distance);
+
+
+            foreach (string label in numberList)
+            {
+                //List<string> group = GetGroup(label, LabelList, gridPointList);
+                if (group.Count >= 2)
+                {
+                //    double distance = CalculateDistance(group[0], group[1]);
+                 //   List_dist_1.Add(distance);
+                }
+            }
+        }
+
+        static List<string> SelectCoordbyLabel(string label, List<string> LabelList, List<string> gridPointList)
+        {
+            List<String> Point_Pair = null;
+            int index = LabelList.IndexOf(label);
+            Point_Pair.Add(label);
+            Point_Pair.AddRange(gridPointList[index].Split(';').ToList());
+            return Point_Pair;
+            //return LabelList.Where(point => point.Contains(label)).ToList();
+        }
+
+        static double CalculateDistance(string point1, string point2)
+        {
+            // 解析字符串并提取坐标
+            Point p1 = ParsePointString(point1);
+            Point p2 = ParsePointString(point2);
+
+            // 计算距离
+            Vector vector = new Vector(p2.X - p1.X, p2.Y - p1.Y, p2.Z - p1.Z);
+            return vector.GetLength();
+        }
+
+        static bool ParallelAxis(string point1,string point2)
+        {
+            Point p1 = ParsePointString(point1);
+            Point p2 = ParsePointString(point2);
+
+            // 计算距离
+            Vector vector = new Vector(p2.X - p1.X, p2.Y - p1.Y, p2.Z - p1.Z);
+
+            bool isParallelToXAxis = Math.Abs(vector.Y) < 1e-3;
+            bool isParallelToYAxis = Math.Abs(vector.X) < 1e-3;
+
+            if (isParallelToXAxis || isParallelToYAxis)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
+
+
+        }
+
+        static double DistaceAxis(string point1,string point2,string point3)
+        {
+            Point p1 = ParsePointString(point1);
+            Point p2 = ParsePointString(point2);
+            Point p3 = ParsePointString(point3);
+
+            Tekla.Structures.Geometry3d.Line L1 = new Tekla.Structures.Geometry3d.Line(p1, p2);
+            double d1 = Tekla.Structures.Geometry3d.Distance.PointToLine(p3, L1);
+
+            return d1;
+        }
+
+        static Point ParsePointString(string pointString)
+        {
+            //string[] coordinates = pointString.Split(';');
+            //if (coordinates.Length == 2)
+            {
+                string[] coord1 = pointString.Trim('(', ')').Split(',');
+                //string[] coord2 = pointString[1].Trim('(', ')').Split(',');
+                if (coord1.Length == 3)
+                {
+                    double x1 = double.Parse(coord1[0]);
+                    double y1 = double.Parse(coord1[1]);
+                    double z1 = double.Parse(coord1[2]);
+
+                    return new Point(x1, y1, z1);
+                }
+            }
+            throw new ArgumentException("无法解析的坐标字符串: " + pointString);
         }
 
 
