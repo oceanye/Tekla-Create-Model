@@ -690,7 +690,7 @@ namespace TestTekla
                     beam.Position.Rotation = Position.RotationEnum.TOP;
 
 
-                    beam.Position.RotationOffset = Convert.ToDouble(table.Rows[i].ItemArray[10].ToString());
+                    beam.Position.RotationOffset = Convert.ToDouble(table.Rows[i].ItemArray[10].ToString())-90;
 
 
                     int flag = 0;
