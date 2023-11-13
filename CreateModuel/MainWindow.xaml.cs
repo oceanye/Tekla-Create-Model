@@ -24,6 +24,7 @@ using System.IO;
 using System.Windows.Forms;
 using Point = Tekla.Structures.Geometry3d.Point;
 using Vector = Tekla.Structures.Geometry3d.Vector;
+using System.Text.RegularExpressions;
 
 namespace TestTekla
 {
@@ -38,12 +39,12 @@ namespace TestTekla
         }
 
 
-       public string DbPath = @"C:\ProgramData\Autodesk\Revit\Addins\2018";
-
-        
+        public string DbPath = @"C:\ProgramData\Autodesk\Revit\Addins\2018";
 
 
-       List<string> ProfileList = new List<string>();
+
+
+        List<string> ProfileList = new List<string>();
 
         List<string> PList = new List<string>();
         //  public string DbPath = @"F:\Tekla\RvtData_v0526_debug.db";
@@ -57,11 +58,11 @@ namespace TestTekla
 
 
             Generate_Model();
-            if(PIP_in_Centre)
+            if (PIP_in_Centre)
             {
                 Modify_PIP_position();
             }
-            
+
         }
 
 
@@ -97,11 +98,13 @@ namespace TestTekla
 
                 for (int x = 0; x < profileBeamData.Rows.Count; x++)
                 {
-                    ProfileList.Add(profileBeamData.Rows[x].ItemArray[1].ToString().Split(' ')[2].Replace('X', '*'));
+                    string Profile_temp = profileBeamData.Rows[x].ItemArray[1].ToString().Split(' ')[2].Replace('X', '*');
+                    ProfileList.Add(Profile_temp);
                 }
                 for (int x = 0; x < profileColumData.Rows.Count; x++)
                 {
-                    ProfileList.Add(profileColumData.Rows[x].ItemArray[1].ToString().Split(' ')[2].Replace('X', '*'));
+                    string Profile_temp = profileColumData.Rows[x].ItemArray[1].ToString().Split(' ')[2].Replace('X', '*');
+                    ProfileList.Add(Profile_temp);
                 }
 
 
@@ -139,13 +142,14 @@ namespace TestTekla
                     int Flag = 0;
                     for (int j = 0; j < profileL.Count; j++)
                     {
-                        if (ProfileList[i].Contains(profileL[j].ProfileName))
+                       //if (ProfileList[i].Contains(profileL[j].ProfileName))
+                       if(profileL[j].ProfileName.Contains(ProfileList[i].Replace("*@PEC","").Substring(1)))
                         {
                             Flag++;
                         }
                     }
 
-                    if (Flag == 0)
+                    if (Flag == 0) //现有截面库不包含，需要新建导入
                     {
                         PList.Add(ProfileList[i]);
                     }
@@ -225,47 +229,49 @@ namespace TestTekla
                 #endregion
 
                 #region 生成新轴网
-                cmd.CommandText = "SELECT*FROM GridTable";
-
-                SQLiteDataAdapter adapterGrid = new SQLiteDataAdapter(cmd);
-                DataSet dsGrid = new DataSet();
-                adapterLevel.Fill(dsGrid);
-
-                DataTable tableGrid = dsGrid.Tables[0];
-
-                List<string> LabelList = new List<string>();
-                List<string> gridPointList = new List<string>();
-
-                List<List<string>> gridInfo=new List<List<string>>();
-
-
-
-                Console.WriteLine(LabelList);
-                for (int i = 0; i < tableGrid.Rows.Count; i++)
+                try
                 {
-                    string column1Value = tableGrid.Rows[i][1].ToString();
-                    string column2Value = tableGrid.Rows[i][2].ToString().Split(';')[0];
-                    string column3Value = tableGrid.Rows[i][2].ToString().Split(';')[1];
-                    
-                    List<string> row = new List<string> { column1Value, column2Value, column3Value };
+                    cmd.CommandText = "SELECT*FROM GridTable";
 
-                    gridInfo.Add(row);
+                    SQLiteDataAdapter adapterGrid = new SQLiteDataAdapter(cmd);
+                    DataSet dsGrid = new DataSet();
+                    adapterLevel.Fill(dsGrid);
 
-                    //LabelList.Add( tableGrid.Rows[i].ItemArray[1].ToString() );
+                    DataTable tableGrid = dsGrid.Tables[0];
 
-                    //gridPointList.Add(tableGrid.Rows[i].ItemArray[2].ToString());
-                }
+                    List<string> LabelList = new List<string>();
+                    List<string> gridPointList = new List<string>();
 
-                 
-                List<List<string>> letterList =new List<List<string>>();
-                List<List<string>> numberList = new List<List<string>>();
+                    List<List<string>> gridInfo = new List<List<string>>();
 
-                foreach (List<string> sublist in gridInfo)
-                {
 
-                    // 使用 LINQ 查询来检查元素是否包含数字
 
-                        if (ParallelAxis( sublist[1],sublist[2])==true) // 只保留平行于坐标轴的轴网 
+                    //Console.WriteLine(LabelList);
+                    for (int i = 0; i < tableGrid.Rows.Count; i++)
+                    {
+                        string column1Value = tableGrid.Rows[i][1].ToString();
+                        string column2Value = tableGrid.Rows[i][2].ToString().Split(';')[0];
+                        string column3Value = tableGrid.Rows[i][2].ToString().Split(';')[1];
+
+                        List<string> row = new List<string> { column1Value, column2Value, column3Value };
+
+                        gridInfo.Add(row);
+
+                        //LabelList.Add( tableGrid.Rows[i].ItemArray[1].ToString() );
+
+                        //gridPointList.Add(tableGrid.Rows[i].ItemArray[2].ToString());
+                    }
+
+
+                    List<List<string>> letterList = new List<List<string>>();
+                    List<List<string>> numberList = new List<List<string>>();
+
+                    foreach (List<string> sublist in gridInfo)
+                    {
+
+                        // 使用 LINQ 查询来检查元素是否包含数字
+
+                        if (ParallelAxis(sublist[1], sublist[2]) == true) // 只保留平行于坐标轴的轴网 
                         {
                             if (sublist[0].Any(char.IsDigit))
                             {
@@ -278,68 +284,74 @@ namespace TestTekla
 
                         }
 
-           
+
+                    }
+                    // letter - Y
+                    // number - X
+
+                    List<double> dist_letterList = new List<double>();
+                    List<double> dist_numberList = new List<double>();
+
+                    List<string> label_letterList = new List<string>();
+                    List<string> label_numberList = new List<string>();
+
+                    label_letterList = letterList.Select(sublist => sublist.First()).ToList();
+                    label_numberList = numberList.Select(sublist => sublist.First()).ToList();
+
+                    dist_letterList.Add(ParsePointString(letterList[0][1]).Y);
+                    dist_numberList.Add(ParsePointString(numberList[0][1]).X);
+
+                    for (int i = 1; i < letterList.Count; i++)
+                    {
+
+                        double d1 = DistaceAxis(letterList[i - 1][1], letterList[i - 1][2], letterList[i][1]);
+                        dist_letterList.Add(d1);
+
+
+                    }
+
+                    for (int i = 1; i < numberList.Count; i++)
+                    {
+
+                        double d1 = DistaceAxis(numberList[i - 1][1], numberList[i - 1][2], numberList[i][1]);
+                        dist_numberList.Add(d1);
+
+                    }
+
+                    //List<string> letterList;
+                    //List<string> numberList;
+                    //List<double> List_dist_A;
+                    //List<double> List_dist_1;
+
+                    //ConvertGrid(LabelList, gridPointList, out letterList, out numberList, out List_dist_A, out List_dist_1);
+
+                    grid.Name = "Grid";
+                    grid.CoordinateX = string.Join(" ", dist_numberList);
+                    grid.CoordinateY = string.Join(" ", dist_letterList);
+                    grid.CoordinateZ = Z;
+                    grid.LabelX = string.Join(" ", label_numberList);
+                    grid.LabelY = string.Join(" ", label_letterList);
+                    grid.LabelZ = LabelZ;
+
+                    grid.ExtensionLeftX = 2000;
+                    grid.ExtensionLeftY = 2000;
+                    grid.ExtensionLeftZ = 2000;
+
+                    grid.ExtensionRightX = 2000;
+                    grid.ExtensionRightY = 2000;
+                    grid.ExtensionRightZ = 2000;
+
+                    grid.IsMagnetic = true;
+
+                    grid.Insert();
+
+                    modelNewGrid.CommitChanges();
                 }
-                // letter - Y
-                // number - X
-
-                List<double> dist_letterList = new List<double>();
-                List<double> dist_numberList = new List<double>();
-
-                List<string> label_letterList = new List<string>();
-                List<string> label_numberList = new List<string>();
-
-                label_letterList = letterList.Select(sublist => sublist.First()).ToList();
-                label_numberList = numberList.Select(sublist => sublist.First()).ToList();
-
-                dist_letterList.Add(ParsePointString(letterList[0][1]).Y);
-                dist_numberList.Add(ParsePointString(numberList[0][1]).X);
-
-                for (int i =1; i<letterList.Count; i++)
+                catch(Exception ex)
                 {
 
-                    double d1 = DistaceAxis(letterList[i - 1][1], letterList[i -1][2], letterList[i][1]);
-                    dist_letterList.Add(d1);
-
-
                 }
-
-                for (int i = 1; i < numberList.Count; i++)
-                {
-
-                    double d1 = DistaceAxis(numberList[i - 1][1], numberList[i - 1][2], numberList[i][1]);
-                    dist_numberList.Add(d1);
-
-                }
-
-                //List<string> letterList;
-                //List<string> numberList;
-                //List<double> List_dist_A;
-                //List<double> List_dist_1;
-
-                //ConvertGrid(LabelList, gridPointList, out letterList, out numberList, out List_dist_A, out List_dist_1);
-
-                grid.Name = "Grid";
-                grid.CoordinateX = string.Join(" ", dist_numberList);
-                grid.CoordinateY = string.Join(" ", dist_letterList);
-                grid.CoordinateZ = Z;
-                grid.LabelX = string.Join(" ", label_numberList);
-                grid.LabelY = string.Join(" ", label_letterList);
-                grid.LabelZ = LabelZ;
-
-                grid.ExtensionLeftX = 2000;
-                grid.ExtensionLeftY = 2000;
-                grid.ExtensionLeftZ = 2000;
-
-                grid.ExtensionRightX = 2000;
-                grid.ExtensionRightY = 2000;
-                grid.ExtensionRightZ = 2000;
-
-                grid.IsMagnetic = true;
-
-                grid.Insert();
-
-                modelNewGrid.CommitChanges();
+                
 
                 #endregion
 
@@ -380,7 +392,9 @@ namespace TestTekla
                     Tekla.Structures.Geometry3d.Point EPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(endStr.Split(',')[0]), Convert.ToDouble(endStr.Split(',')[1]), Convert.ToDouble(endStr.Split(',')[2]));
 
                     string section_name = tableBeam.Rows[i].ItemArray[3].ToString();
-                    string ProfileBeam = section_name.Split(' ')[2].Replace('X', '*');
+                    string ProfileBeam_org = section_name.Split(' ')[2];
+                    string ProfileBeam = ProfileBeam_org.Replace('X', '*').Substring(1);
+
                     string MaterialBeam = tableBeam.Rows[i].ItemArray[17].ToString();
 
                     Tekla.Structures.Geometry3d.Point VectorPoint = new Tekla.Structures.Geometry3d.Point(EPoint.X - SPoint.X, EPoint.Y - SPoint.Y, EPoint.Z - SPoint.Z);
@@ -402,7 +416,8 @@ namespace TestTekla
                     {
                         if (profileL[x].ProfileName.Contains(ProfileBeam))
                         {
-                            beam.Profile.ProfileString = ProfileBeam;
+                            beam.Profile.ProfileString = profileL[x].ProfileName;
+                            break;
                         }
                     }
 
@@ -492,7 +507,7 @@ namespace TestTekla
                         }
                     }
 
-                    
+
 
                     #endregion
 
@@ -615,7 +630,7 @@ namespace TestTekla
                     }
 
 
-                    
+
 
 
                     #endregion
@@ -626,7 +641,7 @@ namespace TestTekla
                 }
 
                 Output_Text.AppendText("生成模型 梁:" + T + "个 \n");
-                Output_Text.AppendText("包含梁上开洞"+(Rec_hole+Cir_hole)+"个：方" + Rec_hole + "/圆" + Cir_hole+"个 \n");
+                Output_Text.AppendText("包含梁上开洞" + (Rec_hole + Cir_hole) + "个：方" + Rec_hole + "/圆" + Cir_hole + "个 \n");
 
 
                 #endregion
@@ -664,7 +679,10 @@ namespace TestTekla
                     string endStr = table.Rows[i].ItemArray[2].ToString().Substring(1, table.Rows[i].ItemArray[2].ToString().Length - 2);
 
                     string ProfileColumn_org = table.Rows[i].ItemArray[3].ToString().Split(' ')[2];
-                    string ProfileColumn = ProfileColumn_org.Replace('X', '*');
+                    string ProfileColumn = ProfileColumn_org.Replace('X', '*').Substring(1);
+
+                    //List<List<string>> StandardProfileList = Import_Standard_ProfileList();
+                    //string ProfilePrex = Profile_Check(ProfileColumn, StandardProfileList);
 
                     string MaterialColumn = table.Rows[i].ItemArray[11].ToString();
 
@@ -678,7 +696,7 @@ namespace TestTekla
                     {
                         if (profileL[x].ProfileName.Contains(ProfileColumn))
                         {
-                            beam.Profile.ProfileString = ProfileColumn;
+                            beam.Profile.ProfileString = profileL[x].ProfileName;//ProfileColumn;
                         }
                     }
 
@@ -690,7 +708,7 @@ namespace TestTekla
                     beam.Position.Rotation = Position.RotationEnum.TOP;
 
 
-                    beam.Position.RotationOffset = Convert.ToDouble(table.Rows[i].ItemArray[10].ToString())-90;
+                    beam.Position.RotationOffset = Convert.ToDouble(table.Rows[i].ItemArray[10].ToString()) - 90;
 
 
                     int flag = 0;
@@ -777,8 +795,8 @@ namespace TestTekla
             }
 
 
-            
-                   // List_dist_A.Add(distance);
+
+            // List_dist_A.Add(distance);
 
 
             foreach (string label in numberList)
@@ -786,8 +804,8 @@ namespace TestTekla
                 //List<string> group = GetGroup(label, LabelList, gridPointList);
                 if (group.Count >= 2)
                 {
-                //    double distance = CalculateDistance(group[0], group[1]);
-                 //   List_dist_1.Add(distance);
+                    //    double distance = CalculateDistance(group[0], group[1]);
+                    //   List_dist_1.Add(distance);
                 }
             }
         }
@@ -813,7 +831,68 @@ namespace TestTekla
             return vector.GetLength();
         }
 
-        static bool ParallelAxis(string point1,string point2)
+        public static String Profile_Check(string Profile_org,List<List<string>> StandardProfileList)
+        {
+
+            Profile_org = Profile_org.Substring(1);
+
+            string Profile_new = "";
+
+
+            foreach (var item in StandardProfileList)
+            {
+                if (item[1]==Profile_org)
+                {
+                    Profile_new = item[0];
+                    break;
+                }
+            }
+            if (Profile_new =="")
+            {
+                Profile_new = "BH";
+            }
+            return Profile_new;
+
+        }
+
+        public static List<List<string>> Import_Standard_ProfileList(string shape_type)
+        {
+            List<List<string>> Standard_ProfileList = new List<List<string>>();
+
+            string filePath = "";
+            //读取文件StandardProfileList.txt
+            
+            if (shape_type == "H")
+            {
+                filePath = "C://ProgramData//Autodesk//Revit//Addins//2018//数据库//StandardProfileList_H.txt";
+            }
+            
+            try
+            {
+                string[] lines = File.ReadAllLines(filePath);
+                foreach( string line in lines)
+                {
+                    string[] values = line.Split(',');
+                    Match matches = Regex.Match(line, @"^([A-Za-z]+)(\d.*)$");
+
+                    List<string> profileValues = new List<string>();
+
+                    profileValues.Add(matches.Groups[1].Value);
+                    profileValues.Add(matches.Groups[2].Value);
+                    
+                    Standard_ProfileList.Add(profileValues);
+                }
+
+
+            }
+            catch(Exception ex)
+            {
+
+            }
+            return Standard_ProfileList;
+        }
+
+    static bool ParallelAxis(string point1, string point2)
         {
             Point p1 = ParsePointString(point1);
             Point p2 = ParsePointString(point2);
@@ -837,7 +916,7 @@ namespace TestTekla
 
         }
 
-        static double DistaceAxis(string point1,string point2,string point3)
+        static double DistaceAxis(string point1, string point2, string point3)
         {
             Point p1 = ParsePointString(point1);
             Point p2 = ParsePointString(point2);
@@ -883,11 +962,11 @@ namespace TestTekla
                     if (b != null)
                     {
 
-                            if (b.Profile.ProfileString.StartsWith("P"))
-                            {
-                                b.Position.Depth = Position.DepthEnum.MIDDLE;
-                                b.Modify();
-                            }
+                        if (b.Profile.ProfileString.StartsWith("P"))
+                        {
+                            b.Position.Depth = Position.DepthEnum.MIDDLE;
+                            b.Modify();
+                        }
 
                     }
                 }
@@ -902,7 +981,9 @@ namespace TestTekla
 
         }
 
-        public void CreateText(string filePath,List<string> pList)
+
+
+    public void CreateText(string filePath, List<string> pList)
         {
             if (Directory.Exists(filePath) == false)
             {
@@ -911,110 +992,113 @@ namespace TestTekla
 
             }
 
-            
-                #region 
+            List<List<string>> StandardProfileList = Import_Standard_ProfileList("H");
+
+            #region 
 
 
-                FileStream fil = new FileStream(filePath + "截面文件.lis", FileMode.Create, FileAccess.Write);
-                StreamWriter sw = new StreamWriter(fil);
-                sw.WriteLine("PROFILE DATABASE EXPORT VERSION = 3");
-                sw.WriteLine("");
-                for (int i = 0; i < pList.Count; i++)
+            FileStream fil = new FileStream(filePath + "截面文件.lis", FileMode.Create, FileAccess.Write);
+            StreamWriter sw = new StreamWriter(fil);
+            sw.WriteLine("PROFILE DATABASE EXPORT VERSION = 3");
+            sw.WriteLine("");
+            for (int i = 0; i < pList.Count; i++)
+            {
+                string profileName = pList[i].Replace("X", "*");
+
+                string ProfilePrex = Profile_Check(profileName, StandardProfileList);
+
+                char section_type = profileName[0];
+                if (section_type == 'H')
                 {
-                    string profileName = pList[i].Replace("X", "*");
+                    double H = Convert.ToDouble(profileName.Split('*')[0].Substring(1));
+                    double W = Convert.ToDouble(profileName.Split('*')[1]);
+                    double F = Convert.ToDouble(profileName.Split('*')[2]);
+                    double Y = Convert.ToDouble(profileName.Split('*')[3]);
 
-                    char section_type = profileName[0];
-                    if (section_type == 'H')
-                      {
-                        double  H =Convert.ToDouble( profileName.Split('*')[0].Substring(1));
-                        double W =Convert.ToDouble( profileName.Split('*')[1]);
-                        double F = Convert.ToDouble(profileName.Split('*')[2]);
-                        double Y = Convert.ToDouble(profileName.Split('*')[3]);
+                    sw.WriteLine("PROFILE_NAME = " + "\"" + ProfilePrex+profileName.Substring(1) + "\"" + ";");
+                    sw.WriteLine("{");
+                    sw.WriteLine("  TYPE = 1; SUB_TYPE = 1001; COORDINATE = 0.000;");
+                    sw.WriteLine("  {");
+                    sw.WriteLine("    \"HEIGHT\"" + "                           " + H);
+                    sw.WriteLine("    \"WIDTH\"" + "                           " + W);
+                    sw.WriteLine("    \"WEB_THICKNESS\"" + "                           " + F);
+                    sw.WriteLine("    \"FLANGE_THICKNESS\"" + "                           " + Y);
+                    sw.WriteLine("    \"ROUNDING_RADIUS_1\"" + "                           " + "0.000000000E+000");
+                    sw.WriteLine("    \"ROUNDING_RADIUS_2\"" + "                           " + "0.000000000E+000");
+                    sw.WriteLine("    \"FLANGE_SLOPE_RATIO\"" + "                           " + "0.000000000E+000");
+                    sw.WriteLine("  }");
+                    sw.WriteLine("}");
+                    sw.WriteLine("");
+                }
+                else if (section_type == 'B')
+                {
+                    double H = Convert.ToDouble(profileName.Split('*')[0].Substring(1));
+                    double W = Convert.ToDouble(profileName.Split('*')[1]);
+                    double F = Convert.ToDouble(profileName.Split('*')[2]);
+                    //double Y = Convert.ToDouble(profileName.Split('*')[3]);
 
-                        sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\""+";");
-                        sw.WriteLine("{");
-                        sw.WriteLine("  TYPE = 1; SUB_TYPE = 1001; COORDINATE = 0.000;");
-                        sw.WriteLine("  {");
-                        sw.WriteLine("    \"HEIGHT\"" + "                           " + H );
-                        sw.WriteLine("    \"WIDTH\"" + "                           " + W);
-                        sw.WriteLine("    \"WEB_THICKNESS\"" + "                           " + F );
-                        sw.WriteLine("    \"FLANGE_THICKNESS\"" + "                           " + Y);
-                        sw.WriteLine("    \"ROUNDING_RADIUS_1\"" + "                           "+ "0.000000000E+000");
-                        sw.WriteLine("    \"ROUNDING_RADIUS_2\"" + "                           " + "0.000000000E+000");
-                        sw.WriteLine("    \"FLANGE_SLOPE_RATIO\"" + "                           " + "0.000000000E+000");
-                        sw.WriteLine("  }");
-                        sw.WriteLine("}");
-                        sw.WriteLine("");
-                       }
-                    else if (section_type == 'B')
-                        {
-                            double H = Convert.ToDouble(profileName.Split('*')[0].Substring(1));
-                            double W = Convert.ToDouble(profileName.Split('*')[1]);
-                            double F = Convert.ToDouble(profileName.Split('*')[2]);
-                            //double Y = Convert.ToDouble(profileName.Split('*')[3]);
-
-                            sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
-                            sw.WriteLine("{");
-                            sw.WriteLine("  TYPE = 8; SUB_TYPE = 8002; COORDINATE = 0.000;");
-                            sw.WriteLine("  {");
-                            sw.WriteLine("    \"HEIGHT\"" + "                           " + H);
-                            sw.WriteLine("    \"WIDTH\"" + "                           " + W);
-                            sw.WriteLine("    \"PLATE_THICKNESS\"" + "                           " + F);
-                            sw.WriteLine("    \"ROUNDING_RADIUS\"" + "                           " + "1.000000000E+001");
-                            sw.WriteLine("  }");
-                            sw.WriteLine("}");
-                            sw.WriteLine("");
-                        }
-                    else if (section_type == 'P')
-                        {
-                            double D = Convert.ToDouble(profileName.Split('*')[0].Substring(1));
-                            double t = Convert.ToDouble(profileName.Split('*')[1]);
+                    sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
+                    sw.WriteLine("{");
+                    sw.WriteLine("  TYPE = 8; SUB_TYPE = 8002; COORDINATE = 0.000;");
+                    sw.WriteLine("  {");
+                    sw.WriteLine("    \"HEIGHT\"" + "                           " + H);
+                    sw.WriteLine("    \"WIDTH\"" + "                           " + W);
+                    sw.WriteLine("    \"PLATE_THICKNESS\"" + "                           " + F);
+                    sw.WriteLine("    \"ROUNDING_RADIUS\"" + "                           " + "1.000000000E+001");
+                    sw.WriteLine("  }");
+                    sw.WriteLine("}");
+                    sw.WriteLine("");
+                }
+                else if (section_type == 'P')
+                {
+                    double D = Convert.ToDouble(profileName.Split('*')[0].Substring(1));
+                    double t = Convert.ToDouble(profileName.Split('*')[1]);
 
 
-                            sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
-                            sw.WriteLine("{");
-                            sw.WriteLine("  TYPE = 7; SUB_TYPE = 7001; COORDINATE = 0.000;");
-                            sw.WriteLine("  {");
-                            sw.WriteLine("    \"DIAMETER\"" + "                           " + D);
-                            sw.WriteLine("    \"PLATE_THICKNESS\"" + "                           " + t);
-                            sw.WriteLine("  }");
-                            sw.WriteLine("}");
-                            sw.WriteLine("");
-                        }
-                    else if (section_type == 'T')
-                        {
-                            double H = Convert.ToDouble(profileName.Split('*')[0].Substring(1));
-                            double W = Convert.ToDouble(profileName.Split('*')[1]);
-                            double F = Convert.ToDouble(profileName.Split('*')[2]);
-                            double Y = Convert.ToDouble(profileName.Split('*')[3]);
+                    sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
+                    sw.WriteLine("{");
+                    sw.WriteLine("  TYPE = 7; SUB_TYPE = 7001; COORDINATE = 0.000;");
+                    sw.WriteLine("  {");
+                    sw.WriteLine("    \"DIAMETER\"" + "                           " + D);
+                    sw.WriteLine("    \"PLATE_THICKNESS\"" + "                           " + t);
+                    sw.WriteLine("  }");
+                    sw.WriteLine("}");
+                    sw.WriteLine("");
+                }
+                else if (section_type == 'T')
+                {
+                    double H = Convert.ToDouble(profileName.Split('*')[0].Substring(1));
+                    double W = Convert.ToDouble(profileName.Split('*')[1]);
+                    double F = Convert.ToDouble(profileName.Split('*')[2]);
+                    double Y = Convert.ToDouble(profileName.Split('*')[3]);
 
-                            sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
-                            sw.WriteLine("{");
-                            sw.WriteLine("  TYPE = 10; SUB_TYPE = 10001; COORDINATE = 0.000;");
-                            sw.WriteLine("  {");
-                            sw.WriteLine("    \"HEIGHT\"" + "                           " + H);
-                            sw.WriteLine("    \"WIDTH\"" + "                           " + W);
-                            sw.WriteLine("    \"WEB_THICKNESS\"" + "                           " + F);
-                            sw.WriteLine("    \"FLANGE_THICKNESS\"" + "                           " + Y);
-                            sw.WriteLine("    \"ROUNDING_RADIUS_1\"" + "                           " + "0.000000000E+000");
-                            sw.WriteLine("    \"ROUNDING_RADIUS_2\"" + "                           " + "0.000000000E+000");
-                            sw.WriteLine("    \"FLANGE_SLOPE_RATIO\"" + "                           " + "0.000000000E+000");
-                            sw.WriteLine("  }");
-                            sw.WriteLine("}");
-                            sw.WriteLine("");
-                        }
+                    sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
+                    sw.WriteLine("{");
+                    sw.WriteLine("  TYPE = 10; SUB_TYPE = 10001; COORDINATE = 0.000;");
+                    sw.WriteLine("  {");
+                    sw.WriteLine("    \"HEIGHT\"" + "                           " + H);
+                    sw.WriteLine("    \"WIDTH\"" + "                           " + W);
+                    sw.WriteLine("    \"WEB_THICKNESS\"" + "                           " + F);
+                    sw.WriteLine("    \"FLANGE_THICKNESS\"" + "                           " + Y);
+                    sw.WriteLine("    \"ROUNDING_RADIUS_1\"" + "                           " + "0.000000000E+000");
+                    sw.WriteLine("    \"ROUNDING_RADIUS_2\"" + "                           " + "0.000000000E+000");
+                    sw.WriteLine("    \"FLANGE_SLOPE_RATIO\"" + "                           " + "0.000000000E+000");
+                    sw.WriteLine("  }");
+                    sw.WriteLine("}");
+                    sw.WriteLine("");
+                }
 
 
 
 
 
             }
-                
 
-                sw.Close();
-                fil.Close();
 
-                #endregion
+            sw.Close();
+            fil.Close();
+
+            #endregion
 
 
 
@@ -1033,7 +1117,7 @@ namespace TestTekla
 
             cmd.CommandText = sql;
 
-            SQLiteDataAdapter adapter= new SQLiteDataAdapter(cmd);
+            SQLiteDataAdapter adapter = new SQLiteDataAdapter(cmd);
             DataSet ds = new DataSet();
             adapter.Fill(ds);
 
@@ -1049,14 +1133,14 @@ namespace TestTekla
         /// <param name="VectorPoint"></param>
         /// <param name="DevString"></param>
         /// <returns></returns>
-        public Tekla.Structures.Geometry3d.Point GetNewStartPoint(Tekla.Structures.Geometry3d.Point point, Tekla.Structures.Geometry3d.Point VectorPoint,double DevString)
+        public Tekla.Structures.Geometry3d.Point GetNewStartPoint(Tekla.Structures.Geometry3d.Point point, Tekla.Structures.Geometry3d.Point VectorPoint, double DevString)
         {
 
 
             Tekla.Structures.Geometry3d.Point pt = new Tekla.Structures.Geometry3d.Point();
 
-            pt.X = (-VectorPoint.Y * DevString)/ Math.Sqrt(VectorPoint.X * VectorPoint.X + VectorPoint.Y * VectorPoint.Y) + point.X;
-            pt.Y = (VectorPoint.X * DevString ) / Math.Sqrt(VectorPoint.X * VectorPoint.X + VectorPoint.Y * VectorPoint.Y) + point.Y;
+            pt.X = (-VectorPoint.Y * DevString) / Math.Sqrt(VectorPoint.X * VectorPoint.X + VectorPoint.Y * VectorPoint.Y) + point.X;
+            pt.Y = (VectorPoint.X * DevString) / Math.Sqrt(VectorPoint.X * VectorPoint.X + VectorPoint.Y * VectorPoint.Y) + point.Y;
             pt.Z = point.Z;
 
             return pt;
@@ -1084,5 +1168,7 @@ namespace TestTekla
         {
 
         }
+
+
     }
 }
