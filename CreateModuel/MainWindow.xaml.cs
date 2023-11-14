@@ -26,6 +26,7 @@ using Point = Tekla.Structures.Geometry3d.Point;
 using Vector = Tekla.Structures.Geometry3d.Vector;
 using System.Text.RegularExpressions;
 
+
 namespace TestTekla
 {
     /// <summary>
@@ -36,6 +37,9 @@ namespace TestTekla
         public MainWindow()
         {
             InitializeComponent();
+
+            Refresh_Material_List();
+
         }
 
 
@@ -47,6 +51,8 @@ namespace TestTekla
         List<string> ProfileList = new List<string>();
 
         List<string> PList = new List<string>();
+
+
         //  public string DbPath = @"F:\Tekla\RvtData_v0526_debug.db";
 
 
@@ -134,8 +140,10 @@ namespace TestTekla
                     MaterialItem materialItem = MaterialItemEn.Current as MaterialItem;
 
                     materialL.Add(materialItem);
+                    //Material_List.Add(materialItem.MaterialName);
 
                 }
+
 
                 for (int i = 0; i < ProfileList.Count; i++)
                 {
@@ -432,9 +440,8 @@ namespace TestTekla
                     }
                     if (flag == 0)
                     {
-                        beam.Material.MaterialString = "Q235B";
+                        beam.Material.MaterialString = combox_mat_beam.SelectedItem.ToString();
                     }
-
 
 
                     beam.Class = "3";
@@ -672,7 +679,7 @@ namespace TestTekla
 
 
 
-                    Beam beam = new Beam();
+                    Beam column = new Beam();
 
                     string startStr = table.Rows[i].ItemArray[1].ToString().Substring(1, table.Rows[i].ItemArray[1].ToString().Length - 2);
 
@@ -686,29 +693,29 @@ namespace TestTekla
 
                     string MaterialColumn = table.Rows[i].ItemArray[11].ToString();
 
-                    beam.StartPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(startStr.Split(',')[0]), Convert.ToDouble(startStr.Split(',')[1]), Convert.ToDouble(startStr.Split(',')[2]));
+                    column.StartPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(startStr.Split(',')[0]), Convert.ToDouble(startStr.Split(',')[1]), Convert.ToDouble(startStr.Split(',')[2]));
 
-                    beam.EndPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(endStr.Split(',')[0]), Convert.ToDouble(endStr.Split(',')[1]), Convert.ToDouble(endStr.Split(',')[2]));
+                    column.EndPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(endStr.Split(',')[0]), Convert.ToDouble(endStr.Split(',')[1]), Convert.ToDouble(endStr.Split(',')[2]));
 
-                    beam.Profile.ProfileString = "";
+                    column.Profile.ProfileString = "";
 
                     for (int x = 0; x < profileL.Count; x++)
                     {
                         if (profileL[x].ProfileName.Contains(ProfileColumn))
                         {
-                            beam.Profile.ProfileString = profileL[x].ProfileName;//ProfileColumn;
+                            column.Profile.ProfileString = profileL[x].ProfileName;//ProfileColumn;
                         }
                     }
 
-                    beam.Position.Plane = Position.PlaneEnum.MIDDLE;
+                    column.Position.Plane = Position.PlaneEnum.MIDDLE;
 
-                    beam.Position.Depth = Position.DepthEnum.MIDDLE;
-
-
-                    beam.Position.Rotation = Position.RotationEnum.TOP;
+                    column.Position.Depth = Position.DepthEnum.MIDDLE;
 
 
-                    beam.Position.RotationOffset = Convert.ToDouble(table.Rows[i].ItemArray[10].ToString()) - 90;
+                    column.Position.Rotation = Position.RotationEnum.TOP;
+
+
+                    column.Position.RotationOffset = Convert.ToDouble(table.Rows[i].ItemArray[10].ToString()) - 90;
 
 
                     int flag = 0;
@@ -716,23 +723,23 @@ namespace TestTekla
                     {
                         if (materialL[x].MaterialName.Contains(MaterialColumn))
                         {
-                            beam.Material.MaterialString = MaterialColumn;
+                            column.Material.MaterialString = MaterialColumn;
                             flag++;
                         }
                     }
                     if (flag == 0)
                     {
-                        beam.Material.MaterialString = "Q235B";
+                        column.Material.MaterialString = combox_mat_column.SelectedItem.ToString();
                     }
 
 
-                    beam.Class = "7";
-                    beam.Name = "column";
+                    column.Class = "7";
+                    column.Name = "column";
 
 
-                    if (beam.Profile.ProfileString != "")
+                    if (column.Profile.ProfileString != "")
                     {
-                        beam.Insert();
+                        column.Insert();
                     }
 
 
@@ -1015,6 +1022,9 @@ namespace TestTekla
                     double F = Convert.ToDouble(profileName.Split('*')[2]);
                     double Y = Convert.ToDouble(profileName.Split('*')[3]);
 
+                    double Area=Convert.ToDouble(H*W-(H-2*Y)*(W-F));
+                    double Weight_Length= Convert.ToDouble(Area*7850*1e-6);
+
                     sw.WriteLine("PROFILE_NAME = " + "\"" + ProfilePrex+profileName.Substring(1) + "\"" + ";");
                     sw.WriteLine("{");
                     sw.WriteLine("  TYPE = 1; SUB_TYPE = 1001; COORDINATE = 0.000;");
@@ -1026,6 +1036,8 @@ namespace TestTekla
                     sw.WriteLine("    \"ROUNDING_RADIUS_1\"" + "                           " + "0.000000000E+000");
                     sw.WriteLine("    \"ROUNDING_RADIUS_2\"" + "                           " + "0.000000000E+000");
                     sw.WriteLine("    \"FLANGE_SLOPE_RATIO\"" + "                           " + "0.000000000E+000");
+                    sw.WriteLine("    \"CROSS_SECTION_AREA\"" + "                           " + Area);
+                    sw.WriteLine("    \"WEIGHT_PER_UNIT_LENGTH\"" + "                           " + Weight_Length);
                     sw.WriteLine("  }");
                     sw.WriteLine("}");
                     sw.WriteLine("");
@@ -1169,6 +1181,120 @@ namespace TestTekla
 
         }
 
+        private void ComboBox_SelectionChanged_1(object sender, SelectionChangedEventArgs e)
+        {
 
+        }
+
+        public void combox_mat_beam_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+            
+
+        }
+
+        public void CopyMaterial()
+        {
+            try
+            {
+                CatalogHandler catalogHandler = new CatalogHandler();
+                //catalogHandler.GetConnection();
+
+                MaterialItemEnumerator MaterialItemEn = catalogHandler.GetMaterialItems();
+
+                //MaterialItem newMaterial = new MaterialItem();
+
+
+
+                //Refresh_Material_List();
+                //Material xxx = catalogHandler.GetMaterial("Q345");
+                 while (MaterialItemEn.MoveNext())
+                {
+                MaterialItem materialItem = MaterialItemEn.Current as MaterialItem;
+                //materialL.Add(materialItem);
+                string mat_temp = materialItem.MaterialName;
+                     if (materialItem.MaterialName.Contains("Q345"))
+                    {
+
+                            MaterialItem newMaterial = materialItem.Copy();
+
+                            newMaterial.MaterialName = MaterialTextBox.Text;
+                            newMaterial.PlateDensity = 7850;
+                            newMaterial.ProfileDensity = 7850;
+                            newMaterial.Insert();
+
+                            //newMaterial.MaterialName = "111";
+                            //newMaterial.Insert();
+
+                            //bool t = newMaterial.Modify();
+
+                            //MaterialItem newMaterial=new MaterialItem();
+                            //newMaterial.Insert();
+                            //newMaterial.MaterialName = "Q355";
+                            //newMaterial.Copy();
+
+                            break;
+                     }
+
+                 }
+
+            }
+            catch
+            {
+
+            }
+            Refresh_Material_List();
+        }
+
+        private void Refresh_Material_List()
+        {
+            CatalogHandler CatalogHandler = new CatalogHandler();
+
+
+
+            //ProfileItemEnumerator ProfileItemEnumerator = CatalogHandler.GetLibraryProfileItems();
+            MaterialItemEnumerator MaterialItemEn = CatalogHandler.GetMaterialItems();
+
+            List<string> Material_List = new List<string>();
+
+
+
+            while (MaterialItemEn.MoveNext())
+            {
+                MaterialItem materialItem = MaterialItemEn.Current as MaterialItem;
+
+                //materialL.Add(materialItem);
+                string mat_temp = materialItem.MaterialName;
+                if (mat_temp.StartsWith("Q"))
+                {
+                    Material_List.Add(materialItem.MaterialName);
+                }
+
+
+
+            }
+
+            string Default_Mat = "Q235";
+
+            if (Material_List.Contains("Q355"))
+
+            {
+                Default_Mat = "Q355";
+            }
+
+
+            combox_mat_column.ItemsSource = Material_List;
+            combox_mat_beam.ItemsSource = Material_List;
+
+            combox_mat_column.SelectedItem = Default_Mat;
+            combox_mat_beam.SelectedItem = Default_Mat;
+
+
+        }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            CopyMaterial();
+        }
     }
 }
