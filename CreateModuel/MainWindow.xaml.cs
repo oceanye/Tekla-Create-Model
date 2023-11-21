@@ -528,8 +528,11 @@ namespace TestTekla
 
                     for (int x = 0; x < holetable.Rows.Count; x++)
                     {
+
+                        
                         if (holetable.Rows[x].ItemArray[5].ToString().Equals(tableBeam.Rows[i].ItemArray[0].ToString()))
                         {
+                            Console.WriteLine("Hole：" + (holetable.Rows[x].ItemArray[0].ToString()));
 
                             ContourPlate CP = new ContourPlate();
 
@@ -615,8 +618,10 @@ namespace TestTekla
                             CP.Material.MaterialString = "K30-2";
                             CP.Class = BooleanPart.BooleanOperativeClassName;
 
-
+                            
                             CP.Insert();
+
+                            Console.WriteLine("CP:" + CP.Identifier);
                             BooleanPart Beam = new BooleanPart();
 
                             Beam.Father = beam;

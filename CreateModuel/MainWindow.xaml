@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TestTekla"
         mc:Ignorable="d"
-        Title="生成模型 V3.4" Height="353.295" Width="400.671">
+        Title="生成模型 V3.4" Height="446.874" Width="400.671">
     <Grid Margin="0,0,2,4">
         <Button x:Name="button" Content="生成模型" HorizontalAlignment="Left" Margin="267,57,0,0" VerticalAlignment="Top" Width="106" Height="28" Click="button_Click"/>
         <ComboBox x:Name="comboBox" HorizontalAlignment="Left" Margin="142,23,0,0" VerticalAlignment="Top" Width="120" SelectedIndex="1" SelectionChanged="comboBox_SelectionChanged" IsEnabled="False">
@@ -14,15 +14,17 @@
         </ComboBox>
         <Label x:Name="label" Content="梁中心线是否偏移：" HorizontalAlignment="Left" Margin="19,23,0,0" VerticalAlignment="Top"/>
         <CheckBox x:Name="checkbox_PIP_CENTRE" Content="圆管支撑调整为中心对齐" HorizontalAlignment="Left" Margin="19,70,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="Output_Text" Height="80" Margin="19,219,39,0" TextWrapping="Wrap" VerticalAlignment="Top" TextChanged="Output_Text_TextChanged" IsReadOnly="True"/>
+        <TextBox x:Name="Output_Text" Height="140" Margin="19,207,0,0" TextWrapping="Wrap" VerticalAlignment="Top" TextChanged="Output_Text_TextChanged" IsReadOnly="True" HorizontalAlignment="Left" Width="362"/>
         <Label Content="模型信息" HorizontalAlignment="Left" Margin="19,177,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.54,2.064"/>
         <ComboBox x:Name="combox_mat_column" HorizontalAlignment="Left" Height="21" Margin="122,102,0,0" VerticalAlignment="Top" Width="78" SelectionChanged="ComboBox_SelectionChanged_1"/>
-        <Label x:Name="label_Copy" Content="材料强度" HorizontalAlignment="Left" Margin="19,98,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label_Copy" Content="默认&#xD;&#xA;材料强度" HorizontalAlignment="Left" Margin="19,90,0,0" VerticalAlignment="Top"/>
         <Label x:Name="label_Copy1" Content="柱" HorizontalAlignment="Left" Margin="95,98,0,0" VerticalAlignment="Top"/>
-        <ComboBox x:Name="combox_mat_beam" HorizontalAlignment="Left" Margin="253,102,0,0" VerticalAlignment="Top" Width="120" SelectionChanged="combox_mat_beam_SelectionChanged"/>
+        <ComboBox x:Name="combox_mat_beam" HorizontalAlignment="Left" Margin="253,102,0,0" VerticalAlignment="Top" Width="77" SelectionChanged="combox_mat_beam_SelectionChanged"/>
         <Label x:Name="label_Copy2" Content="梁" HorizontalAlignment="Left" Margin="220,98,0,0" VerticalAlignment="Top"/>
-        <Button x:Name="Button_AddMaterial" Content="增加钢材型号" HorizontalAlignment="Left" Margin="106,145,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_1"/>
-        <TextBox x:Name="MaterialTextBox" HorizontalAlignment="Left" Height="23" Margin="198,141,0,0" TextWrapping="Wrap" Text="Q355B" VerticalAlignment="Top" Width="120"/>
+        <Button x:Name="Button_AddMaterial" Content="增加钢材型号" HorizontalAlignment="Left" Margin="19,145,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_1"/>
+        <TextBox x:Name="MaterialTextBox" HorizontalAlignment="Left" Height="23" Margin="122,145,0,0" TextWrapping="Wrap" Text="Q355B" VerticalAlignment="Top" Width="78"/>
+        <Label Content="© 创新研究院-BIM数字中心" Margin="122,371,108,0" RenderTransformOrigin="0.54,2.064" FontSize="10" FontWeight="Bold" Height="22" VerticalAlignment="Top"/>
+        <Image HorizontalAlignment="Left" Height="31" Margin="289,362,0,0" VerticalAlignment="Top" Width="92" Source="index-logo.png"/>
 
     </Grid>
 </Window>

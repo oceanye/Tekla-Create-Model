@@ -27,6 +27,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_3AEC7DBF048CAB390514405B433971B7"
+        "OwnerKey" = "8:_4222715FF06A4DA2B912DB7B90D81693"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_4222715FF06A4DA2B912DB7B90D81693"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -107,12 +113,6 @@
         {
         "MsmKey" = "8:_60E4B50790F40091F725742DE2A0AEE8"
         "OwnerKey" = "8:_7AF8B346F42156BED946A35B0783EC81"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_6C29B12AA47CF72E9D8ACBA70B562416"
-        "OwnerKey" = "8:_4222715FF06A4DA2B912DB7B90D81693"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -646,7 +646,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_6C29B12AA47CF72E9D8ACBA70B562416"
+        "OwnerKey" = "8:_3AEC7DBF048CAB390514405B433971B7"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -803,6 +803,37 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_3AEC7DBF048CAB390514405B433971B7"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:System.Net.Http, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+                "ScatterAssemblies"
+                {
+                    "_3AEC7DBF048CAB390514405B433971B7"
+                    {
+                    "Name" = "8:System.Net.Http.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:System.Net.Http.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_C59D09927A9F47BC8B1AE657DE34BB68"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_45FD6F663B88486A944CBDA8D6A34788"
@@ -974,37 +1005,6 @@
                     }
                 }
             "SourcePath" = "8:Tekla.Common.Geometry.Shapes.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_C59D09927A9F47BC8B1AE657DE34BB68"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_6C29B12AA47CF72E9D8ACBA70B562416"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:System.Net.Http, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
-                "ScatterAssemblies"
-                {
-                    "_6C29B12AA47CF72E9D8ACBA70B562416"
-                    {
-                    "Name" = "8:System.Net.Http.dll"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:System.Net.Http.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_C59D09927A9F47BC8B1AE657DE34BB68"
@@ -1709,15 +1709,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:CreateTeklaModel"
-        "ProductCode" = "8:{E8D9E916-1843-4269-9546-DD2DEB7C98E5}"
-        "PackageCode" = "8:{E3E65ACC-DBD7-4A72-98D7-947E96CB53E9}"
+        "ProductCode" = "8:{F4AA9DF7-7FB9-456A-AC9E-ADB3608C6199}"
+        "PackageCode" = "8:{E379F20D-811B-48C2-9106-628BFBB8E830}"
         "UpgradeCode" = "8:{82F284A2-88D6-4F85-998E-E64E4CF2848F}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:3.2.0"
+        "ProductVersion" = "8:3.4.0"
         "Manufacturer" = "8:GBS_Software"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
