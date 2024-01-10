@@ -25,6 +25,10 @@ using System.Windows.Forms;
 using Point = Tekla.Structures.Geometry3d.Point;
 using Vector = Tekla.Structures.Geometry3d.Vector;
 using System.Text.RegularExpressions;
+using Tekla.Structures.Drawing;
+using NPOI.SS.Formula.PTG;
+using NPOI.SS.Formula.Functions;
+using Match = System.Text.RegularExpressions.Match;
 
 
 namespace TestTekla
@@ -102,14 +106,24 @@ namespace TestTekla
 
                 DataTable tagData = getData(sqlTag, cmd);
 
+                //ProfileList 新模型所需截面
+
+                List<List<string>> StandardProfileList = Import_Standard_ProfileList("H");
+
                 for (int x = 0; x < profileBeamData.Rows.Count; x++)
                 {
                     string Profile_temp = profileBeamData.Rows[x].ItemArray[1].ToString().Split(' ')[2].Replace('X', '*');
+
+                    Profile_temp=Profile_Standardize(Profile_temp, StandardProfileList);
+
                     ProfileList.Add(Profile_temp);
                 }
                 for (int x = 0; x < profileColumData.Rows.Count; x++)
                 {
                     string Profile_temp = profileColumData.Rows[x].ItemArray[1].ToString().Split(' ')[2].Replace('X', '*');
+
+                    Profile_temp = Profile_Standardize(Profile_temp, StandardProfileList);
+
                     ProfileList.Add(Profile_temp);
                 }
 
@@ -125,7 +139,7 @@ namespace TestTekla
                 MaterialItemEnumerator MaterialItemEn = CatalogHandler.GetMaterialItems();
 
 
-
+                //profileL 现有Tekla截面库
 
                 while (ProfileItemEnumerator.MoveNext())
                 {
@@ -150,13 +164,16 @@ namespace TestTekla
                     int Flag = 0;
                     for (int j = 0; j < profileL.Count; j++)
                     {
+                        string Profile1 = ProfileList[i].Replace("*@PEC", "");
                        //if (ProfileList[i].Contains(profileL[j].ProfileName))
-                       if(profileL[j].ProfileName.Contains(ProfileList[i].Replace("*@PEC","").Substring(1)))
+                       if (profileL[j].ProfileName.Contains(Profile1))
                         {
                             Flag++;
                         }
                     }
 
+
+                    //PList 需要新建的截面
                     if (Flag == 0) //现有截面库不包含，需要新建导入
                     {
                         PList.Add(ProfileList[i]);
@@ -168,7 +185,7 @@ namespace TestTekla
                 {
                     Model myModel = new Model();
                     string path = myModel.GetInfo().ModelPath + "\\";
-                    CreateText(path, PList);
+                    CreateNewProfileFile(path, PList);
                     //ShowForm sf = new TestTekla.ShowForm(PList);
                     //sf.ShowDialog();
 
@@ -843,29 +860,62 @@ namespace TestTekla
             return vector.GetLength();
         }
 
-        public static String Profile_Check(string Profile_org,List<List<string>> StandardProfileList)
+
+
+        public static String Profile_Standardize(string Profile_org, List<List<string>> StandardProfileList)
         {
 
-            Profile_org = Profile_org.Substring(1);
+
 
             string Profile_new = "";
+
+            string section_type = "";   //截面类型
+            string section_size = ""; //截面尺寸
+            string section_type_standard = ""; //查表后标准截面类型
+
+
+
+            Match matches = Regex.Match(Profile_org, @"^([A-Za-z]+)(\d.*)$");
+
+            List<string> profileValues = new List<string>();
+
+            section_type=(matches.Groups[1].Value);
+            section_size=(matches.Groups[2].Value);
+
+            if (matches.Success)
+            {
+                section_type = (matches.Groups[1].Value);
+                section_size = (matches.Groups[2].Value);
+
+            }
 
 
             foreach (var item in StandardProfileList)
             {
-                if (item[1]==Profile_org)
+                if (item[1] == section_size)
                 {
-                    Profile_new = item[0];
+                    section_type_standard = item[0];
                     break;
                 }
             }
-            if (Profile_new =="")
+            if (section_type_standard == "")
             {
-                Profile_new = "BH";
+                section_type_standard = "BH";
             }
+
+            if(section_type =="H")
+            {
+                Profile_new = section_type_standard + section_size;
+            }
+            else // 后续可拓展方形、圆形、T型等
+            {
+                Profile_new = Profile_org;
+            }
+
             return Profile_new;
 
         }
+
 
         public static List<List<string>> Import_Standard_ProfileList(string shape_type)
         {
@@ -876,7 +926,7 @@ namespace TestTekla
             
             if (shape_type == "H")
             {
-                filePath = "C://ProgramData//Autodesk//Revit//Addins//2018//数据库//StandardProfileList_H.txt";
+                filePath = "D://Program Files//GBS_Software//CreateTeklaModel//H_Profile_Standard.txt";
             }
             
             try
@@ -995,7 +1045,7 @@ namespace TestTekla
 
 
 
-    public void CreateText(string filePath, List<string> pList)
+    public void CreateNewProfileFile(string filePath, List<string> pList)
         {
             if (Directory.Exists(filePath) == false)
             {
@@ -1004,7 +1054,7 @@ namespace TestTekla
 
             }
 
-            List<List<string>> StandardProfileList = Import_Standard_ProfileList("H");
+            //List<List<string>> StandardProfileList = Import_Standard_ProfileList("H");
 
             #region 
 
@@ -1017,20 +1067,33 @@ namespace TestTekla
             {
                 string profileName = pList[i].Replace("X", "*");
 
-                string ProfilePrex = Profile_Check(profileName, StandardProfileList);
+                string section_type = "";//Profile_Check(profileName, StandardProfileList);
 
-                char section_type = profileName[0];
-                if (section_type == 'H')
+                string section_size = "";
+
+                Match matches = Regex.Match(profileName, @"^([A-Za-z]+)(\d.*)$");
+
+                List<string> profileValues = new List<string>();
+                if (matches.Success)
                 {
-                    double H = Convert.ToDouble(profileName.Split('*')[0].Substring(1));
-                    double W = Convert.ToDouble(profileName.Split('*')[1]);
-                    double F = Convert.ToDouble(profileName.Split('*')[2]);
-                    double Y = Convert.ToDouble(profileName.Split('*')[3]);
+                    section_type = matches.Groups[1].Value;
+                    section_size = matches.Groups[2].Value;
+                }
+
+
+
+                if (section_type.Contains( 'H'))
+                {
+                    double H = Convert.ToDouble(section_size.Split('*')[0]);
+                    double W = Convert.ToDouble(section_size.Split('*')[1]);
+                    double F = Convert.ToDouble(section_size.Split('*')[2]);
+                    double Y = Convert.ToDouble(section_size.Split('*')[3]);
 
                     double Area=Convert.ToDouble(H*W-(H-2*Y)*(W-F));
                     double Weight_Length= Convert.ToDouble(Area*7850*1e-6);
 
-                    sw.WriteLine("PROFILE_NAME = " + "\"" + ProfilePrex+profileName.Substring(1) + "\"" + ";");
+
+                    sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
                     sw.WriteLine("{");
                     sw.WriteLine("  TYPE = 1; SUB_TYPE = 1001; COORDINATE = 0.000;");
                     sw.WriteLine("  {");
@@ -1047,12 +1110,16 @@ namespace TestTekla
                     sw.WriteLine("}");
                     sw.WriteLine("");
                 }
-                else if (section_type == 'B')
+                else if (section_type == "B")
                 {
-                    double H = Convert.ToDouble(profileName.Split('*')[0].Substring(1));
-                    double W = Convert.ToDouble(profileName.Split('*')[1]);
-                    double F = Convert.ToDouble(profileName.Split('*')[2]);
+                    double H = Convert.ToDouble(section_size.Split('*')[0]);
+                    double W = Convert.ToDouble(section_size.Split('*')[1]);
+                    double F = Convert.ToDouble(section_size.Split('*')[2]);
                     //double Y = Convert.ToDouble(profileName.Split('*')[3]);
+
+                    double Area = Convert.ToDouble(H * W - (H - 2 * F) * (W - 2*F));
+                    double Weight_Length = Convert.ToDouble(Area * 7850 * 1e-6);
+
 
                     sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
                     sw.WriteLine("{");
@@ -1062,14 +1129,20 @@ namespace TestTekla
                     sw.WriteLine("    \"WIDTH\"" + "                           " + W);
                     sw.WriteLine("    \"PLATE_THICKNESS\"" + "                           " + F);
                     sw.WriteLine("    \"ROUNDING_RADIUS\"" + "                           " + "1.000000000E+001");
+                    sw.WriteLine("    \"CROSS_SECTION_AREA\"" + "                           " + Area);
+                    sw.WriteLine("    \"WEIGHT_PER_UNIT_LENGTH\"" + "                           " + Weight_Length);
                     sw.WriteLine("  }");
                     sw.WriteLine("}");
                     sw.WriteLine("");
                 }
-                else if (section_type == 'P')
+                else if (section_type == "P")
                 {
-                    double D = Convert.ToDouble(profileName.Split('*')[0].Substring(1));
-                    double t = Convert.ToDouble(profileName.Split('*')[1]);
+                    double D = Convert.ToDouble(section_size.Split('*')[0]);
+                    double t = Convert.ToDouble(section_size.Split('*')[1]);
+
+                    double Area = Convert.ToDouble((D * D - (D - 2 * t) * (D - 2 * t))/4*3.14);
+                    double Weight_Length = Convert.ToDouble(Area * 7850 * 1e-6);
+
 
 
                     sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
@@ -1078,16 +1151,24 @@ namespace TestTekla
                     sw.WriteLine("  {");
                     sw.WriteLine("    \"DIAMETER\"" + "                           " + D);
                     sw.WriteLine("    \"PLATE_THICKNESS\"" + "                           " + t);
+                    sw.WriteLine("    \"CROSS_SECTION_AREA\"" + "                           " + Area);
+                    sw.WriteLine("    \"WEIGHT_PER_UNIT_LENGTH\"" + "                           " + Weight_Length);
                     sw.WriteLine("  }");
                     sw.WriteLine("}");
                     sw.WriteLine("");
                 }
-                else if (section_type == 'T')
+                else if (section_type == "T")
                 {
-                    double H = Convert.ToDouble(profileName.Split('*')[0].Substring(1));
-                    double W = Convert.ToDouble(profileName.Split('*')[1]);
-                    double F = Convert.ToDouble(profileName.Split('*')[2]);
-                    double Y = Convert.ToDouble(profileName.Split('*')[3]);
+                    double H = Convert.ToDouble(section_size.Split('*')[0]);
+                    double W = Convert.ToDouble(section_size.Split('*')[1]);
+                    double F = Convert.ToDouble(section_size.Split('*')[2]);
+                    double Y = Convert.ToDouble(section_size.Split('*')[3]);
+
+
+                    double Area = Convert.ToDouble((H * W - (H - 2 * F) * (W - 1 * Y)));
+                    double Weight_Length = Convert.ToDouble(Area * 7850 * 1e-6);
+
+
 
                     sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
                     sw.WriteLine("{");
@@ -1100,6 +1181,8 @@ namespace TestTekla
                     sw.WriteLine("    \"ROUNDING_RADIUS_1\"" + "                           " + "0.000000000E+000");
                     sw.WriteLine("    \"ROUNDING_RADIUS_2\"" + "                           " + "0.000000000E+000");
                     sw.WriteLine("    \"FLANGE_SLOPE_RATIO\"" + "                           " + "0.000000000E+000");
+                    sw.WriteLine("    \"CROSS_SECTION_AREA\"" + "                           " + Area);
+                    sw.WriteLine("    \"WEIGHT_PER_UNIT_LENGTH\"" + "                           " + Weight_Length);
                     sw.WriteLine("  }");
                     sw.WriteLine("}");
                     sw.WriteLine("");
