@@ -44,6 +44,12 @@ namespace TestTekla
 
             Refresh_Material_List();
 
+            //combo_color增加两个选项("根据截面区分", "根据梁柱区分")，默认选择 根据截面
+            combo_color.Items.Add("截面区分");
+            combo_color.Items.Add("梁柱区分");
+            combo_color.SelectedIndex = 0;
+
+
         }
 
 
@@ -53,6 +59,8 @@ namespace TestTekla
 
 
         List<string> ProfileList = new List<string>();
+        List<string> ProfileList_beam = new List<string>();
+        List<string> ProfileList_column = new List<string>();
 
         List<string> PList = new List<string>();
 
@@ -63,6 +71,9 @@ namespace TestTekla
 
         private void button_Click(object sender, RoutedEventArgs e)
         {
+
+            //清空Output_Text
+            Output_Text.Clear();
 
             bool PIP_in_Centre = (bool)checkbox_PIP_CENTRE.IsChecked;
 
@@ -109,6 +120,7 @@ namespace TestTekla
                 //ProfileList 新模型所需截面
 
                 List<List<string>> StandardProfileList = Import_Standard_ProfileList("H");
+                //import beam section
 
                 for (int x = 0; x < profileBeamData.Rows.Count; x++)
                 {
@@ -116,16 +128,48 @@ namespace TestTekla
 
                     Profile_temp=Profile_Standardize(Profile_temp, StandardProfileList);
 
-                    ProfileList.Add(Profile_temp);
+                    ProfileList_beam.Add(Profile_temp);
                 }
+
+                //建立一个dictionary，每一个profileList_beam的string对应一个int，从1开始，每次加1，跳过重复
+                Dictionary<string, int> ProfileList_beam_color = new Dictionary<string, int>();
+                int count = 1;
+                foreach (string profile in ProfileList_beam)
+                {
+                    if (!ProfileList_beam_color.ContainsKey(profile))
+                    {
+                        ProfileList_beam_color.Add(profile, count);
+                        count++;
+                    }
+                }
+
+
+
+                // import columb section
                 for (int x = 0; x < profileColumData.Rows.Count; x++)
                 {
                     string Profile_temp = profileColumData.Rows[x].ItemArray[1].ToString().Split(' ')[2].Replace('X', '*');
 
                     Profile_temp = Profile_Standardize(Profile_temp, StandardProfileList);
 
-                    ProfileList.Add(Profile_temp);
+                    ProfileList_column.Add(Profile_temp);
                 }
+
+                //建立一个dictionary，每一个profileList_beam的string对应一个int，从1开始，每次加1，跳过重复
+                Dictionary<string, int> ProfileList_column_color = new Dictionary<string, int>();
+                count = 1;
+                foreach (string profile in ProfileList_column)
+                {
+                    if (!ProfileList_column_color.ContainsKey(profile))
+                    {
+                        ProfileList_column_color.Add(profile, count);
+                        count++;
+                    }
+                }
+
+                //join the beam and column profileList
+                ProfileList.AddRange(ProfileList_beam);
+                ProfileList.AddRange(ProfileList_column);
 
 
                 List<LibraryProfileItem> profileL = new List<LibraryProfileItem>();
@@ -418,11 +462,19 @@ namespace TestTekla
 
                     string section_name = tableBeam.Rows[i].ItemArray[3].ToString();
                     string ProfileBeam_org = section_name.Split(' ')[2];
-                    string ProfileBeam = ProfileBeam_org.Replace('X', '*').Substring(1);
+                    string ProfileBeam = ProfileBeam_org.Replace('X', '*');//.Substring(1);
+
+                    //在ProfileList_Beam中匹配包含 ProfileBeam的项，如果存在，将ProfileBeam赋值为ProfileList_Beam中的项，如果不存在，保留原值
+                    ProfileBeam = Profile_Standardize(ProfileBeam, StandardProfileList);
+
+
 
                     string MaterialBeam = tableBeam.Rows[i].ItemArray[17].ToString();
 
                     Tekla.Structures.Geometry3d.Point VectorPoint = new Tekla.Structures.Geometry3d.Point(EPoint.X - SPoint.X, EPoint.Y - SPoint.Y, EPoint.Z - SPoint.Z);
+                    
+
+
 
 
 
@@ -439,7 +491,7 @@ namespace TestTekla
                     beam.Profile.ProfileString = "";
                     for (int x = 0; x < profileL.Count; x++)
                     {
-                        if (profileL[x].ProfileName.Contains(ProfileBeam))
+                        if (profileL[x].ProfileName==(ProfileBeam))
                         {
                             beam.Profile.ProfileString = profileL[x].ProfileName;
                             break;
@@ -460,8 +512,19 @@ namespace TestTekla
                         beam.Material.MaterialString = combox_mat_beam.SelectedItem.ToString();
                     }
 
+                    // 根据combo_color的选择，建立switch case是"构件区分"，和case是"截面区分”
+                    switch (combo_color.SelectionBoxItem.ToString())
+                    {
+                        case "梁柱区分":
+                            beam.Class = "3";
+                            break;
+                        case "截面区分":
+                            beam.Class = ProfileList_beam_color[beam.Profile.ProfileString].ToString();
+                            break;
+                    }
 
-                    beam.Class = "3";
+
+                    //将int转换为string
 
 
                     if (comboBox.SelectionBoxItem.ToString() == "是")// 此段可以删除，中心线始终位于钢梁翼缘顶部
@@ -668,8 +731,8 @@ namespace TestTekla
                     model.CommitChanges();
 
                 }
+                Output_Text.AppendText("生成模型 梁类型:" + ProfileList_beam_color.Count + "种,构件 " + T + "个 \n");
 
-                Output_Text.AppendText("生成模型 梁:" + T + "个 \n");
                 Output_Text.AppendText("包含梁上开洞" + (Rec_hole + Cir_hole) + "个：方" + Rec_hole + "/圆" + Cir_hole + "个 \n");
 
 
@@ -708,7 +771,9 @@ namespace TestTekla
                     string endStr = table.Rows[i].ItemArray[2].ToString().Substring(1, table.Rows[i].ItemArray[2].ToString().Length - 2);
 
                     string ProfileColumn_org = table.Rows[i].ItemArray[3].ToString().Split(' ')[2];
-                    string ProfileColumn = ProfileColumn_org.Replace('X', '*').Substring(1);
+                    string ProfileColumn = ProfileColumn_org.Replace('X', '*');//.Substring(1);
+
+                    ProfileColumn = Profile_Standardize(ProfileColumn, StandardProfileList);
 
                     //List<List<string>> StandardProfileList = Import_Standard_ProfileList();
                     //string ProfilePrex = Profile_Check(ProfileColumn, StandardProfileList);
@@ -755,7 +820,17 @@ namespace TestTekla
                     }
 
 
-                    column.Class = "7";
+                    // 根据combo_color的选择，建立switch case是"构件区分"，和case是"截面区分”
+                    switch (combo_color.SelectionBoxItem.ToString())
+                    {
+                        case "梁柱区分":
+                            column.Class = "3";
+                            break;
+                        case "截面区分":
+                            column.Class = ProfileList_column_color[column.Profile.ProfileString].ToString();
+                            break;
+                    }
+
                     column.Name = "column";
 
 
@@ -770,7 +845,8 @@ namespace TestTekla
                     modelCo.CommitChanges();
                 }
 
-                Output_Text.AppendText("生成模型 柱:" + T1 + "个");
+                Output_Text.AppendText("生成模型 柱类型:" + ProfileList_column_color.Count + "种，构件" + T1 + "个\n");
+
 
                 #endregion
 
@@ -1092,10 +1168,16 @@ namespace TestTekla
                     double Area=Convert.ToDouble(H*W-(H-2*Y)*(W-F));
                     double Weight_Length= Convert.ToDouble(Area*7850*1e-6);
 
+                    string profileType = "1001";
+
+                    if (section_type.Contains("BH"))
+                    {
+                        profileType = "1002";
+                    }
 
                     sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
                     sw.WriteLine("{");
-                    sw.WriteLine("  TYPE = 1; SUB_TYPE = 1001; COORDINATE = 0.000;");
+                    sw.WriteLine("  TYPE = 1; SUB_TYPE = "+profileType+"; COORDINATE = 0.000;");
                     sw.WriteLine("  {");
                     sw.WriteLine("    \"HEIGHT\"" + "                           " + H);
                     sw.WriteLine("    \"WIDTH\"" + "                           " + W);
