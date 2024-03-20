@@ -31,6 +31,7 @@
         <Image HorizontalAlignment="Left" Height="31" Margin="232,362,0,0" VerticalAlignment="Top" Width="92" Source="index-logo.png" Grid.Column="1"/>
         <Label Content="构件颜色(等级）" HorizontalAlignment="Left" Margin="19,181,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.54,2.064" Grid.ColumnSpan="2"/>
         <ComboBox x:Name="combo_color" HorizontalAlignment="Left" Margin="65,181,0,0" VerticalAlignment="Top" Width="120" Grid.Column="1"/>
+        <Button Name="SelectPEC" Grid.Column="1" Content="选择生成PEC" HorizontalAlignment="Left" Height="33" Margin="218,181,0,0" VerticalAlignment="Top" Width="105" Click="SelectPEC_Click"/>
 
     </Grid>
 </Window>

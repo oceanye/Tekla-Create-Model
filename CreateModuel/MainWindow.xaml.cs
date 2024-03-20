@@ -29,6 +29,8 @@ using Tekla.Structures.Drawing;
 using NPOI.SS.Formula.PTG;
 using NPOI.SS.Formula.Functions;
 using Match = System.Text.RegularExpressions.Match;
+using ModelObjectSelector = Tekla.Structures.Model.UI.ModelObjectSelector;
+using static Tekla.Structures.Model.Part;
 
 
 namespace TestTekla
@@ -557,6 +559,10 @@ namespace TestTekla
                     }
 
 
+                    
+
+
+
                     #region 测试
 
 
@@ -872,6 +878,90 @@ namespace TestTekla
 
         }
 
+
+
+        //建立一个函数phraseHSection(section_name),通过对H型截面的解析，返回截面的H,B,tw,tf。通过section_name的字段进行正则匹配，第一个数字是H，第二个数字是B，第三个数字是tw，第四个数字是tf，返回一个list
+        public List<double> phraseHSection(string section_name)
+        {
+            List<double> sectionValues = new List<double>();
+
+            Match match = Regex.Match(section_name, @"([A-Za-z]{1,2})(\d+)\D*(\d+)\D*(\d+)\D*(\d+)\D*");
+
+            if (match.Success)
+            {
+                // 使用捕获组提取四个数字
+
+                    //要求是int sectionValues.AddRange((match.Groups.Cast<Group>().Skip(2).Select(g => g.Value)));
+                    sectionValues.AddRange((match.Groups.Cast<Group>().Skip(2).Select(g => Convert.ToDouble(g.Value))));
+
+            }
+
+            return sectionValues;
+        }
+
+        private void CreatePEC(Beam beam)
+        {
+            Model model = new Model();
+            Beam beam_C1 = new Beam();
+
+            //完成如下功能 H B tw tf = phraseHSection(beam.Profile.ProfileString)
+            List<double> sectionValues = phraseHSection(beam.Profile.ProfileString);
+            double H = sectionValues[0];
+            double B = sectionValues[1];
+            double tw = sectionValues[2];
+            double tf = sectionValues[3];
+
+
+
+            //在同样位置，加入一个截面是h=300,b=100的混凝土梁
+            beam_C1.Profile.ProfileString = (H - 2 * tf).ToString() + "*" + (B / 2 - tw / 2).ToString();
+            beam_C1.Material.MaterialString = "C30";
+            beam_C1.Class = "1";
+            beam_C1.StartPoint = beam.StartPoint;
+            beam_C1.EndPoint = beam.EndPoint;
+
+            beam_C1.StartPointOffset.Dy = (B / 4) + (tw / 4);
+            beam_C1.EndPointOffset.Dy = (B / 4) + (tw / 4);
+            beam_C1.StartPointOffset.Dz = -tf;
+            beam_C1.EndPointOffset.Dz = -tf;
+            beam_C1.Insert();
+
+            Beam beam_C2 = new Beam();
+
+            beam_C2.Profile.ProfileString = (H - 2 * tf).ToString() + "*" + (B / 2 - tw / 2).ToString();
+            beam_C2.Material.MaterialString = "C30";
+            beam_C2.Class = "1";
+            beam_C2.StartPoint = beam.StartPoint;
+            beam_C2.EndPoint = beam.EndPoint;
+
+            beam_C2.StartPointOffset.Dy = -(B / 4 + tw / 4);
+            beam_C2.EndPointOffset.Dy = -(B / 4 + tw / 4);
+            beam_C2.StartPointOffset.Dz = -tf;
+            beam_C2.EndPointOffset.Dz = -tf;
+            beam_C2.Insert();
+
+
+            // Create main assembly
+            Assembly mainAssembly = new Assembly();
+            mainAssembly.Name = "MainAssembly";
+            mainAssembly.Insert();
+
+            mainAssembly.Add(beam_C1);
+            mainAssembly.SetMainPart(beam_C1);
+            
+            mainAssembly.Add(beam_C2);
+            mainAssembly.Modify();
+
+            
+            //找到包含beam的assembly，并加入到mainAssembly
+            //mainAssembly.Add(beam.GetAssembly());
+
+
+
+            model.CommitChanges();
+        }
+
+        
 
         static void ConvertGrid(List<string> LabelList, List<string> gridPointList, out List<string> letterList, out List<string> numberList, out List<double> List_dist_A, out List<double> List_dist_1)
         {
@@ -1465,6 +1555,28 @@ namespace TestTekla
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
             CopyMaterial();
+        }
+
+        private void SelectPEC_Click(object sender, RoutedEventArgs e)
+        {
+            //Model model = new Model();
+
+            // 选择用户框选的梁对象
+            // 创建一个 ModelObjectSelector 对象来获取当前选中的对象
+            ModelObjectSelector selector = new ModelObjectSelector();
+
+            // 获取当前选中的对象
+            ModelObjectEnumerator selectedObjects = selector.GetSelectedObjects();
+
+            // 历遍每个选中的对象
+            while (selectedObjects.MoveNext())
+            {
+                Beam selectedBeam = selectedObjects.Current as Beam;
+                if (selectedBeam != null)
+                {
+                    CreatePEC(selectedBeam);
+                }
+            }
         }
     }
 }
