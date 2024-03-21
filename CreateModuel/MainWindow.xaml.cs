@@ -521,7 +521,13 @@ namespace TestTekla
                             beam.Class = "3";
                             break;
                         case "截面区分":
-                            beam.Class = ProfileList_beam_color[beam.Profile.ProfileString].ToString();
+                            int color_index = 0;
+                            try 
+                            { color_index = ProfileList_beam_color[beam.Profile.ProfileString]; }
+                            catch(Exception)
+                            { System.Windows.Forms.MessageBox.Show("检查截面"+ ProfileBeam); }
+
+                            beam.Class = color_index.ToString();
                             break;
                     }
 
