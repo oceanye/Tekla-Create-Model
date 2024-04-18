@@ -31,6 +31,8 @@ using NPOI.SS.Formula.Functions;
 using Match = System.Text.RegularExpressions.Match;
 using ModelObjectSelector = Tekla.Structures.Model.UI.ModelObjectSelector;
 using static Tekla.Structures.Model.Part;
+using Weld = Tekla.Structures.Model.Weld;
+using MessageBox = System.Windows.MessageBox;
 
 
 namespace TestTekla
@@ -50,6 +52,15 @@ namespace TestTekla
             combo_color.Items.Add("截面区分");
             combo_color.Items.Add("梁柱区分");
             combo_color.SelectedIndex = 0;
+
+            //Cmb_rot_s2两个选项("左", "右")，默认选择 右
+            Cmb_rot_s2.Items.Add("左");
+            Cmb_rot_s2.Items.Add("右");
+            Cmb_rot_s2.SelectedIndex = 1;
+
+            Cmb_Shape.Items.Add("L型");
+            Cmb_Shape.Items.Add("1型");
+            Cmb_Shape.SelectedIndex = 0;
 
 
         }
@@ -1459,7 +1470,7 @@ namespace TestTekla
 
         }
 
-        public void CopyMaterial()
+        public void CopyMaterial(string mattype)
         {
             try
             {
@@ -1484,7 +1495,13 @@ namespace TestTekla
 
                             MaterialItem newMaterial = materialItem.Copy();
 
+                        if (mattype == "wall")
+                            newMaterial.MaterialName = MaterialTextBoxWallPEC.Text;
+                        else
+                        {
                             newMaterial.MaterialName = MaterialTextBox.Text;
+                        }
+                           
                             newMaterial.PlateDensity = 7850;
                             newMaterial.ProfileDensity = 7850;
                             newMaterial.Insert();
@@ -1551,16 +1568,18 @@ namespace TestTekla
 
             combox_mat_column.ItemsSource = Material_List;
             combox_mat_beam.ItemsSource = Material_List;
+            combox_mat_wall.ItemsSource = Material_List;
 
             combox_mat_column.SelectedItem = Default_Mat;
             combox_mat_beam.SelectedItem = Default_Mat;
+            combox_mat_wall.SelectedItem = Default_Mat;
 
 
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            CopyMaterial();
+            CopyMaterial("frame");
         }
 
         private void SelectPEC_Click(object sender, RoutedEventArgs e)
@@ -1583,6 +1602,285 @@ namespace TestTekla
                     CreatePEC(selectedBeam);
                 }
             }
+        }
+
+        private void Arrange_PEC_Wall_Click(object sender, RoutedEventArgs e)
+        {
+            PickPointAndCreatePlate();
+        }
+        public void PickPointAndCreatePlate()
+        {
+            Model model = new Model();
+            if (!model.GetConnectionStatus())
+            {
+                Console.WriteLine("Not connected to any Tekla Structures model");
+                return;
+            }
+
+            Picker picker = new Picker();
+            try
+            {
+                // 选择模型中的点
+                Point pickedPoint = picker.PickPoint();
+
+                // 创建板
+                if (pickedPoint != null)
+                {
+                    Console.WriteLine($"Picked Point Coordinates: X = {pickedPoint.X}, Y = {pickedPoint.Y}, Z = {pickedPoint.Z}");
+                    CreatePECWall(pickedPoint, model);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error picking point: " + ex.Message);
+            }
+        }
+
+        //建立一个函数CreatePECWall(pickedPoint),放置一个Column，截面H300x100x6x9，高度23000
+        public void CreatePECWall(Point pickedPoint, Model model)
+        {
+
+            string H1_section = TextBox_H1.Text;
+            string H2_section;
+            if (Cmb_Shape.SelectedIndex == 0)
+            {
+                H2_section = TextBox_H2.Text;
+            }
+            else
+            {
+                H2_section = H1_section;
+            }
+            //正则比配H1_section 中的数字，从大到小排列
+            List<double> sectionValues_H1 = phraseHSection(H1_section);
+
+            List<double> sectionValues_H2 = phraseHSection(H1_section);
+
+            double L1 = Convert.ToInt32(TextBox_L1.Text);
+            double L2 = Convert.ToInt32(TextBox_L2.Text);
+            double T1 = Convert.ToInt32(TextBox_T1.Text);
+            double T2 = Convert.ToInt32(TextBox_T1.Text);
+
+            string MaterialWallPEC = combox_mat_wall.SelectedItem.ToString();
+            double Wall_Height = Convert.ToDouble(TextBox_WallHeight.Text);
+
+            //if sectionValue_H1[1] 不等于 T1 或者 sectionValue_H2[1] 不等于T1,showmessage 检查截面
+            if (sectionValues_H1[1] != T1 || sectionValues_H2[1] != T1)
+            {
+                //MessageBox.Show("检查截面尺寸"),点击确认关闭后，return
+
+                MessageBox.Show("检查截面尺寸");
+
+
+
+
+                //结束当前函数
+                return;
+            }
+
+
+            double H1_h = sectionValues_H1[0]; //600;
+            double H1_b = T1;
+            double H1_tw = sectionValues_H1[2] ;
+            double H1_tf = sectionValues_H1[3] ;
+
+            double H2_h = sectionValues_H2[0];
+            double H2_b = T1;
+            double H2_tw = sectionValues_H2[2];
+            double H2_tf = sectionValues_H2[3];
+
+            double T1_h = L2-(H2_b/2+H2_tw/2);
+            double T1_b = T2;
+            double T1_tw = Convert.ToDouble(TextBox_T.Text.Split('*')[0]);
+            double T1_tf = Convert.ToDouble(TextBox_T.Text.Split('*')[1]);
+
+
+            double P1_h = (L1 - H1_h - H2_h);
+            double P1_tw = 10;
+
+
+            //长边加劲板
+            int n_s1 = Convert.ToInt32(TextBox_n_s1.Text);
+            double s1_b = (T1 - P1_tw) / 2;
+            double s1_t = Convert.ToDouble (TextBox_s1_t.Text);
+
+
+            //短边加劲板
+            int n_s2 = Convert.ToInt32(TextBox_n_s2.Text);
+            double s2_b = (T2 - T1_tw) / 2;
+            double s2_t = Convert.ToDouble(TextBox_s2_t.Text);
+            //如果cmb_rot_s2 选左，则 r_s2=-1,否则r_s2=1
+            int r_s2 ; // 1-右侧；-1-左侧；
+
+            if (Cmb_rot_s2.SelectedIndex == 0)
+            {
+                r_s2 = -1;
+            }
+            else
+            {
+                r_s2 = 1;
+            }
+            
+            Beam column = new Beam();
+            column.Profile.ProfileString = "HI"+H1_h+"-"+H1_tw + "-" + H1_tf + "*" + H1_b;//"HI600-15-20*300";
+            column.Material.MaterialString = MaterialWallPEC;
+            column.Class = "1";
+            column.StartPoint = pickedPoint;
+            column.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + Wall_Height);
+            column.Position.Depth = Position.DepthEnum.MIDDLE;
+            column.Position.Plane = Position.PlaneEnum.MIDDLE;
+            column.Position.Rotation = Position.RotationEnum.TOP;
+            column.Position.RotationOffset = 0;
+            column.Insert();
+
+            Beam column1 = new Beam();
+            column1.Profile.ProfileString = "HI" + H2_h + "-" + H2_tw + "-" + H2_tf + "*" + H2_b;//"HI600-15-20*300";
+            column1.Material.MaterialString = MaterialWallPEC;
+            column1.Class = "1";
+            column1.StartPoint = pickedPoint;
+            column1.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + Wall_Height);
+            column1.Position.Depth = Position.DepthEnum.MIDDLE;
+            column1.Position.Plane = Position.PlaneEnum.MIDDLE;
+            column1.Position.Rotation = Position.RotationEnum.TOP;
+            column1.Position.RotationOffset = 0;
+            column1.Position.DepthOffset = L1-H1_h/2-H2_h/2;
+            column1.Insert();
+
+
+
+
+            Beam columnP1 = new Beam();
+            columnP1.Profile.ProfileString = "PL"+ P1_h+"*"+P1_tw;//"PL1000*20";
+            columnP1.Material.MaterialString = MaterialWallPEC;
+            columnP1.Class = "1";
+            columnP1.StartPoint = pickedPoint;
+            columnP1.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + Wall_Height);
+            columnP1.Position.Depth = Position.DepthEnum.MIDDLE;
+            columnP1.Position.Plane = Position.PlaneEnum.MIDDLE;
+            columnP1.Position.Rotation = Position.RotationEnum.TOP;
+            columnP1.Position.DepthOffset = H1_h/2+P1_h/2;
+            columnP1.Position.RotationOffset = 0;
+            columnP1.Insert();
+
+
+
+            //长边加劲板
+
+            for (int mirr = -1; mirr < 2; mirr=mirr+2)//加劲板镜像侧布置 -1 1
+            {
+                for (int i = 1; i < (n_s1 + 1); i++)
+                {
+                double d_T1 = H1_h / 2+P1_h / (n_s1 + 1) * (i);
+
+
+                    Beam columnS1A = new Beam();
+                    columnS1A.Profile.ProfileString = "PL" + s1_b + "*" + s1_t;// "PL150*10";
+                    columnS1A.Material.MaterialString = "Q345";
+                    columnS1A.Class = "2";
+                    columnS1A.StartPoint = pickedPoint;
+                    columnS1A.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + 23000);
+                    columnS1A.Position.Depth = Position.DepthEnum.MIDDLE;
+                    columnS1A.Position.Plane = Position.PlaneEnum.MIDDLE;
+                    columnS1A.Position.Rotation = Position.RotationEnum.BACK;
+                    columnS1A.Position.PlaneOffset = mirr * (s1_b / 2 + P1_tw / 2);
+                    columnS1A.Position.DepthOffset = d_T1;//P1_h / 2 + H1_h / 2;
+                    columnS1A.Position.RotationOffset = 0;
+                    columnS1A.Insert();
+                }
+            }
+
+
+
+            if (Cmb_Shape.SelectedIndex == 0)
+            {
+                Beam columnT = new Beam();
+                columnT.Profile.ProfileString = "T" + T1_h + "-" + T1_tw + "-" + T1_tf + "-" + T1_b;//"T500-10-15-100";
+                columnT.Material.MaterialString = MaterialWallPEC;
+                columnT.Class = "1";
+                columnT.StartPoint = pickedPoint;
+                columnT.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + Wall_Height);
+                columnT.Position.Depth = Position.DepthEnum.MIDDLE;
+                columnT.Position.Plane = Position.PlaneEnum.MIDDLE;
+                columnT.Position.Rotation = Position.RotationEnum.BACK;
+                columnT.Position.PlaneOffset = -1 * (L2 - T2 / 2 - T1_h / 2);
+                columnT.Position.RotationOffset = 0 + 180 * (r_s2 - 1) / -2; // r_s2 = 1 -> rotataion =0  r_s2=-1 -》rotation=180 
+                columnT.Position.DepthOffset = -r_s2 * (H1_h / 2 - T1_b / 2);
+                columnT.Insert();
+
+
+                //短边加劲板
+
+                //建立for循环，如果n_s2>0,则建立区间（0,T2)的n_s2等分数字
+
+
+                for (int mirr = -1; mirr < n_s2; mirr = mirr + 2)//加劲板镜像侧布置 -1 1
+                {
+                    for (int i = 1; i < (n_s2 + 1); i++)
+                    {
+                        double d_T2 = T1_h / (n_s2 + 1) * (i);
+
+
+                        Beam columnS2A = new Beam();
+                        columnS2A.Profile.ProfileString = "PL" + s2_b + "*" + s2_t;
+                        columnS2A.Material.MaterialString = MaterialWallPEC;
+                        columnS2A.Class = "3";
+                        columnS2A.StartPoint = pickedPoint;
+                        columnS2A.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + Wall_Height);
+                        columnS2A.Position.Depth = Position.DepthEnum.MIDDLE;
+                        columnS2A.Position.Plane = Position.PlaneEnum.MIDDLE;
+                        columnS2A.Position.Rotation = Position.RotationEnum.BACK;
+                        columnS2A.Position.PlaneOffset = mirr * (s2_b / 2 + T1_tw / 2) - (H1_h - T1_b) / 2; //
+                        columnS2A.Position.DepthOffset = r_s2 * d_T2;//;r_s2 = 1 -> 右侧  r_s2=-1 -》左侧 
+                        columnS2A.Position.RotationOffset = 90;
+                        columnS2A.Insert();
+                    }
+                }
+
+
+            }
+
+
+ 
+
+
+
+            //将column与columnT建立Weld
+            //Weld weld = new Weld();
+            //weld.MainObject = column;
+            //weld.SecondaryObject = columnT;
+            //weld.TypeAbove = BaseWeld.WeldTypeEnum.WELD_TYPE_SQUARE_GROOVE_SQUARE_BUTT;
+            //weld.Insert();
+
+
+
+            model.CommitChanges();
+        }
+
+        private void Cmb_Shape_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (Cmb_Shape.SelectedIndex == 1)
+
+            {
+                Cmb_rot_s2.IsEnabled = false;
+                TextBox_T2.IsEnabled = false;
+                TextBox_L2.IsEnabled = false;
+                TextBox_H2.IsEnabled = false;
+                TextBox_T.IsEnabled = false;
+                TextBox_n_s2.IsEnabled = false;
+            }
+            else
+            {
+                Cmb_rot_s2.IsEnabled = true;
+                TextBox_T2.IsEnabled = true;
+                TextBox_L2.IsEnabled = true;
+                TextBox_H2.IsEnabled = true;
+                TextBox_T.IsEnabled = true;
+                TextBox_n_s2.IsEnabled = true;
+            }
+        }
+
+        private void Button_Click_WallPECMat(object sender, RoutedEventArgs e)
+        {
+            CopyMaterial("wall");
         }
     }
 }
