@@ -5,16 +5,17 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TestTekla"
         mc:Ignorable="d"
-        Title="生成模型 V3.9" Height="646.874" Width="500.671">
+        Title="生成模型 V3.9.2" Height="646.874" Width="500.671">
     <Grid Margin="0,0,2,4">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition Width="6*"/>
+            <ColumnDefinition Width="8*"/>
+            <ColumnDefinition Width="64*"/>
+            <ColumnDefinition Width="427*"/>
         </Grid.ColumnDefinitions>
-        <Label Content="© 创新研究院-BIM数字中心" Margin="65,575,108,0" RenderTransformOrigin="0.54,2.064" FontSize="10" FontWeight="Bold" Height="22" VerticalAlignment="Top" Grid.Column="1"/>
-        <Image HorizontalAlignment="Left" Height="31" Margin="263,575,0,0" VerticalAlignment="Top" Width="92" Source="index-logo.png" Grid.Column="1"/>
-        <TabControl Grid.ColumnSpan="2" Margin="13,12,7,89">
-            <TabItem Header="梁柱框架" Margin="-2,-2,-118,0">
+        <Label Content="© 创新研究院-BIM数字中心" Margin="65,575,108,0" RenderTransformOrigin="0.54,2.064" FontSize="10" FontWeight="Bold" Height="22" VerticalAlignment="Top" Grid.Column="2"/>
+        <Image HorizontalAlignment="Left" Height="31" Margin="263,575,0,0" VerticalAlignment="Top" Width="92" Source="index-logo.png" Grid.Column="2"/>
+        <TabControl Grid.ColumnSpan="2" Margin="6,12,7,89" Grid.Column="1">
+            <TabItem Header="梁柱框架" Margin="-2,-2,-147,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="83*"/>
@@ -42,7 +43,7 @@
                     <Button x:Name="SelectPEC" Content="选择生成PEC" HorizontalAlignment="Left" Height="33" Margin="30,177,0,0" VerticalAlignment="Top" Width="105" Click="SelectPEC_Click" Grid.Column="2"/>
                 </Grid>
             </TabItem>
-            <TabItem Header="PEC剪力墙" Margin="119,-2,-256,0">
+            <TabItem Header="PEC剪力墙" Margin="68,-2,-199,0">
                 <Grid Margin="3,0,-3,0">
                     <Button x:Name="Arrange_PEC_Wall" Content="PEC 墙" HorizontalAlignment="Left" Height="60" Margin="269,351,0,0" VerticalAlignment="Top" Width="136" Click="Arrange_PEC_Wall_Click"/>
                     <ComboBox x:Name="Cmb_rot_s2" HorizontalAlignment="Left" Margin="399,8,0,0" VerticalAlignment="Top" Width="60" />

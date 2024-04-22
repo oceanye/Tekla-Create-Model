@@ -1749,6 +1749,9 @@ namespace TestTekla
 
 
             Beam columnP1 = new Beam();
+            Beam columnS1A = new Beam();
+
+
             columnP1.Profile.ProfileString = "PL"+ P1_h+"*"+P1_tw;//"PL1000*20";
             columnP1.Material.MaterialString = MaterialWallPEC;
             columnP1.Class = "1";
@@ -1765,19 +1768,22 @@ namespace TestTekla
 
             //长边加劲板
 
+
+
             for (int mirr = -1; mirr < 2; mirr=mirr+2)//加劲板镜像侧布置 -1 1
             {
+
                 for (int i = 1; i < (n_s1 + 1); i++)
                 {
                 double d_T1 = H1_h / 2+P1_h / (n_s1 + 1) * (i);
 
 
-                    Beam columnS1A = new Beam();
+                    
                     columnS1A.Profile.ProfileString = "PL" + s1_b + "*" + s1_t;// "PL150*10";
                     columnS1A.Material.MaterialString = "Q345";
                     columnS1A.Class = "2";
                     columnS1A.StartPoint = pickedPoint;
-                    columnS1A.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + 23000);
+                    columnS1A.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + Wall_Height);
                     columnS1A.Position.Depth = Position.DepthEnum.MIDDLE;
                     columnS1A.Position.Plane = Position.PlaneEnum.MIDDLE;
                     columnS1A.Position.Rotation = Position.RotationEnum.BACK;
@@ -1785,6 +1791,13 @@ namespace TestTekla
                     columnS1A.Position.DepthOffset = d_T1;//P1_h / 2 + H1_h / 2;
                     columnS1A.Position.RotationOffset = 0;
                     columnS1A.Insert();
+
+                    Weld weldP1S1 = new Weld();
+                    weldP1S1.MainObject = columnP1;
+                    weldP1S1.SecondaryObject = columnS1A;
+                    weldP1S1.TypeAbove = BaseWeld.WeldTypeEnum.WELD_TYPE_FILLET;// WELD_TYPE_SQUARE_GROOVE_SQUARE_BUTT;
+                    weldP1S1.SizeAbove = Math.Round(s1_t * 0.7);
+                    weldP1S1.Insert();
                 }
             }
 
@@ -1793,6 +1806,8 @@ namespace TestTekla
             if (Cmb_Shape.SelectedIndex == 0)
             {
                 Beam columnT = new Beam();
+                Beam columnS2A = new Beam();
+
                 columnT.Profile.ProfileString = "T" + T1_h + "-" + T1_tw + "-" + T1_tf + "-" + T1_b;//"T500-10-15-100";
                 columnT.Material.MaterialString = MaterialWallPEC;
                 columnT.Class = "1";
@@ -1807,6 +1822,13 @@ namespace TestTekla
                 columnT.Insert();
 
 
+                Weld weldHT = new Weld();
+                weldHT.MainObject = column;
+                weldHT.SecondaryObject = columnT;
+                weldHT.TypeAbove = BaseWeld.WeldTypeEnum.WELD_TYPE_FILLET;// WELD_TYPE_SQUARE_GROOVE_SQUARE_BUTT;
+
+                weldHT.Insert();
+
                 //短边加劲板
 
                 //建立for循环，如果n_s2>0,则建立区间（0,T2)的n_s2等分数字
@@ -1819,7 +1841,7 @@ namespace TestTekla
                         double d_T2 = T1_h / (n_s2 + 1) * (i);
 
 
-                        Beam columnS2A = new Beam();
+                        
                         columnS2A.Profile.ProfileString = "PL" + s2_b + "*" + s2_t;
                         columnS2A.Material.MaterialString = MaterialWallPEC;
                         columnS2A.Class = "3";
@@ -1832,6 +1854,13 @@ namespace TestTekla
                         columnS2A.Position.DepthOffset = r_s2 * d_T2;//;r_s2 = 1 -> 右侧  r_s2=-1 -》左侧 
                         columnS2A.Position.RotationOffset = 90;
                         columnS2A.Insert();
+
+                        Weld weldTS2 = new Weld();
+                        weldTS2.MainObject = columnT;
+                        weldTS2.SecondaryObject = columnS2A;
+                        weldTS2.TypeAbove = BaseWeld.WeldTypeEnum.WELD_TYPE_FILLET;// WELD_TYPE_SQUARE_GROOVE_SQUARE_BUTT;
+                        weldTS2.SizeAbove = Math.Round(s2_t * 0.7);
+                        weldTS2.Insert();
                     }
                 }
 
@@ -1839,16 +1868,21 @@ namespace TestTekla
             }
 
 
- 
+
+            //将columnH与columnP1建立Weld
+            Weld weldHP1 = new Weld();
+            weldHP1.MainObject = column;
+            weldHP1.SecondaryObject = columnP1;
+            weldHP1.TypeAbove = BaseWeld.WeldTypeEnum.WELD_TYPE_FILLET;//WELD_TYPE_SQUARE_GROOVE_SQUARE_BUTT;
+            weldHP1.Insert();
+
+            Weld weldP1H1 = new Weld();
+            weldP1H1.MainObject = columnP1;
+            weldP1H1.SecondaryObject = column1;
+            weldP1H1.TypeAbove = BaseWeld.WeldTypeEnum.WELD_TYPE_FILLET;// WELD_TYPE_SQUARE_GROOVE_SQUARE_BUTT;
+            weldP1H1.Insert();
 
 
-
-            //将column与columnT建立Weld
-            //Weld weld = new Weld();
-            //weld.MainObject = column;
-            //weld.SecondaryObject = columnT;
-            //weld.TypeAbove = BaseWeld.WeldTypeEnum.WELD_TYPE_SQUARE_GROOVE_SQUARE_BUTT;
-            //weld.Insert();
 
 
 
