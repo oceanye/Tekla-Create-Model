@@ -44,6 +44,9 @@ namespace TestTekla
     {
         public MainWindow()
         {
+
+            time_check();
+
             InitializeComponent();
 
             Refresh_Material_List();
@@ -59,7 +62,7 @@ namespace TestTekla
             Cmb_rot_s2.SelectedIndex = 1;
 
             Cmb_Shape.Items.Add("L型");
-            Cmb_Shape.Items.Add("1型");
+            Cmb_Shape.Items.Add("一型");
             Cmb_Shape.SelectedIndex = 0;
 
 
@@ -482,7 +485,7 @@ namespace TestTekla
 
 
 
-                    string MaterialBeam = tableBeam.Rows[i].ItemArray[17].ToString();
+                    string MaterialBeam = tableBeam.Rows[i].ItemArray[18].ToString();
 
                     Tekla.Structures.Geometry3d.Point VectorPoint = new Tekla.Structures.Geometry3d.Point(EPoint.X - SPoint.X, EPoint.Y - SPoint.Y, EPoint.Z - SPoint.Z);
                     
@@ -495,9 +498,9 @@ namespace TestTekla
                     {
                         Output_Text.AppendText("存在T型截面，需核对构件方向");
                     }
-                    beam.StartPoint = GetNewStartPoint(SPoint, VectorPoint, Convert.ToDouble(tableBeam.Rows[i].ItemArray[11]));
+                    beam.StartPoint = GetNewStartPoint(SPoint, VectorPoint, Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]));
 
-                    beam.EndPoint = GetNewStartPoint(EPoint, VectorPoint, Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]));
+                    beam.EndPoint = GetNewStartPoint(EPoint, VectorPoint, Convert.ToDouble(tableBeam.Rows[i].ItemArray[13]));
 
 
 
@@ -1529,6 +1532,17 @@ namespace TestTekla
             Refresh_Material_List();
         }
 
+        //建立一个time_check 函数，用于检查程序运行时的time，如果晚于2024年12月31日，则跳出messagebox，提示测试版本已更新，并退出quit
+        public void time_check()
+        {
+            DateTime dt = DateTime.Now;
+            if (dt > Convert.ToDateTime("2024-12-31"))
+            {
+                MessageBox.Show("测试版本已更新调整，请联系相关工程师。");
+                Close();
+            }
+        }
+
         private void Refresh_Material_List()
         {
             CatalogHandler CatalogHandler = new CatalogHandler();
@@ -1653,49 +1667,60 @@ namespace TestTekla
             //正则比配H1_section 中的数字，从大到小排列
             List<double> sectionValues_H1 = phraseHSection(H1_section);
 
-            List<double> sectionValues_H2 = phraseHSection(H1_section);
+            List<double> sectionValues_H2 = phraseHSection(H2_section);
 
-            double L1 = Convert.ToInt32(TextBox_L1.Text);
-            double L2 = Convert.ToInt32(TextBox_L2.Text);
-            double T1 = Convert.ToInt32(TextBox_T1.Text);
-            double T2 = Convert.ToInt32(TextBox_T1.Text);
+            double L1 = Convert.ToInt32(TextBox_L1.Text); //长边长度
+            double L2 = Convert.ToInt32(TextBox_L2.Text); //短边长度
+            double T1 = Convert.ToInt32(TextBox_T1.Text); //长边厚度
+            double T2 = Convert.ToInt32(TextBox_T2.Text); //短边厚度
 
             string MaterialWallPEC = combox_mat_wall.SelectedItem.ToString();
             double Wall_Height = Convert.ToDouble(TextBox_WallHeight.Text);
 
             //if sectionValue_H1[1] 不等于 T1 或者 sectionValue_H2[1] 不等于T1,showmessage 检查截面
-            if (sectionValues_H1[1] != T1 || sectionValues_H2[1] != T1)
+            if (sectionValues_H1[1] != T1 )
             {
                 //MessageBox.Show("检查截面尺寸"),点击确认关闭后，return
 
-                MessageBox.Show("检查截面尺寸");
-
-
-
-
-                //结束当前函数
+                MessageBox.Show("检查长边截面宽度尺寸");
                 return;
+
+
+            }
+
+            if (sectionValues_H2[1] != T1)
+            {
+                //MessageBox.Show("检查截面尺寸"),点击确认关闭后，return
+
+                MessageBox.Show("检查两个型钢柱截面宽度尺寸");
+                
+
+
             }
 
 
-            double H1_h = sectionValues_H1[0]; //600;
-            double H1_b = T1;
+
+
+            double H1_h =  sectionValues_H1[0]; //600;
+            double H1_b =  T1;
             double H1_tw = sectionValues_H1[2] ;
             double H1_tf = sectionValues_H1[3] ;
 
-            double H2_h = sectionValues_H2[0];
-            double H2_b = T1;
+            double H2_h =  sectionValues_H2[0];
+            double H2_b =  sectionValues_H2[1];
             double H2_tw = sectionValues_H2[2];
             double H2_tf = sectionValues_H2[3];
 
-            double T1_h = L2-(H2_b/2+H2_tw/2);
+            double T1_h = L2-(H1_b/2+H1_tw/2);
             double T1_b = T2;
             double T1_tw = Convert.ToDouble(TextBox_T.Text.Split('*')[0]);
             double T1_tf = Convert.ToDouble(TextBox_T.Text.Split('*')[1]);
 
 
+
+
             double P1_h = (L1 - H1_h - H2_h);
-            double P1_tw = 10;
+            double P1_tw = Convert.ToInt32(TextBox_P1_tw.Text);
 
 
             //长边加劲板
@@ -1723,7 +1748,7 @@ namespace TestTekla
             Beam column = new Beam();
             column.Profile.ProfileString = "HI"+H1_h+"-"+H1_tw + "-" + H1_tf + "*" + H1_b;//"HI600-15-20*300";
             column.Material.MaterialString = MaterialWallPEC;
-            column.Class = "1";
+            column.Class = "7";
             column.StartPoint = pickedPoint;
             column.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + Wall_Height);
             column.Position.Depth = Position.DepthEnum.MIDDLE;
@@ -1735,7 +1760,7 @@ namespace TestTekla
             Beam column1 = new Beam();
             column1.Profile.ProfileString = "HI" + H2_h + "-" + H2_tw + "-" + H2_tf + "*" + H2_b;//"HI600-15-20*300";
             column1.Material.MaterialString = MaterialWallPEC;
-            column1.Class = "1";
+            column1.Class = "7";
             column1.StartPoint = pickedPoint;
             column1.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + Wall_Height);
             column1.Position.Depth = Position.DepthEnum.MIDDLE;
@@ -1754,7 +1779,7 @@ namespace TestTekla
 
             columnP1.Profile.ProfileString = "PL"+ P1_h+"*"+P1_tw;//"PL1000*20";
             columnP1.Material.MaterialString = MaterialWallPEC;
-            columnP1.Class = "1";
+            columnP1.Class = "7";
             columnP1.StartPoint = pickedPoint;
             columnP1.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + Wall_Height);
             columnP1.Position.Depth = Position.DepthEnum.MIDDLE;
@@ -1780,8 +1805,8 @@ namespace TestTekla
 
                     
                     columnS1A.Profile.ProfileString = "PL" + s1_b + "*" + s1_t;// "PL150*10";
-                    columnS1A.Material.MaterialString = "Q345";
-                    columnS1A.Class = "2";
+                    columnS1A.Material.MaterialString = MaterialWallPEC;
+                    columnS1A.Class = "7";
                     columnS1A.StartPoint = pickedPoint;
                     columnS1A.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + Wall_Height);
                     columnS1A.Position.Depth = Position.DepthEnum.MIDDLE;
@@ -1810,13 +1835,13 @@ namespace TestTekla
 
                 columnT.Profile.ProfileString = "T" + T1_h + "-" + T1_tw + "-" + T1_tf + "-" + T1_b;//"T500-10-15-100";
                 columnT.Material.MaterialString = MaterialWallPEC;
-                columnT.Class = "1";
+                columnT.Class = "7";
                 columnT.StartPoint = pickedPoint;
                 columnT.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + Wall_Height);
                 columnT.Position.Depth = Position.DepthEnum.MIDDLE;
                 columnT.Position.Plane = Position.PlaneEnum.MIDDLE;
                 columnT.Position.Rotation = Position.RotationEnum.BACK;
-                columnT.Position.PlaneOffset = -1 * (L2 - T2 / 2 - T1_h / 2);
+                columnT.Position.PlaneOffset = -1 * (L2 - T1 / 2 - T1_h / 2);
                 columnT.Position.RotationOffset = 0 + 180 * (r_s2 - 1) / -2; // r_s2 = 1 -> rotataion =0  r_s2=-1 -》rotation=180 
                 columnT.Position.DepthOffset = -r_s2 * (H1_h / 2 - T1_b / 2);
                 columnT.Insert();
@@ -1834,7 +1859,7 @@ namespace TestTekla
                 //建立for循环，如果n_s2>0,则建立区间（0,T2)的n_s2等分数字
 
 
-                for (int mirr = -1; mirr < n_s2; mirr = mirr + 2)//加劲板镜像侧布置 -1 1
+                for (int mirr = -1; mirr < 2; mirr = mirr + 2)//加劲板镜像侧布置 -1 1
                 {
                     for (int i = 1; i < (n_s2 + 1); i++)
                     {
@@ -1844,7 +1869,7 @@ namespace TestTekla
                         
                         columnS2A.Profile.ProfileString = "PL" + s2_b + "*" + s2_t;
                         columnS2A.Material.MaterialString = MaterialWallPEC;
-                        columnS2A.Class = "3";
+                        columnS2A.Class = "7";
                         columnS2A.StartPoint = pickedPoint;
                         columnS2A.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + Wall_Height);
                         columnS2A.Position.Depth = Position.DepthEnum.MIDDLE;
@@ -1882,6 +1907,10 @@ namespace TestTekla
             weldP1H1.TypeAbove = BaseWeld.WeldTypeEnum.WELD_TYPE_FILLET;// WELD_TYPE_SQUARE_GROOVE_SQUARE_BUTT;
             weldP1H1.Insert();
 
+
+            //混凝土部分
+
+            //未完成
 
 
 

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TestTekla"
         mc:Ignorable="d"
-        Title="生成模型 V3.9.2" Height="646.874" Width="500.671">
+        Title="生成模型 V3.9.5" Height="646.874" Width="500.671">
     <Grid Margin="0,0,2,4">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="8*"/>
@@ -15,7 +15,7 @@
         <Label Content="© 创新研究院-BIM数字中心" Margin="65,575,108,0" RenderTransformOrigin="0.54,2.064" FontSize="10" FontWeight="Bold" Height="22" VerticalAlignment="Top" Grid.Column="2"/>
         <Image HorizontalAlignment="Left" Height="31" Margin="263,575,0,0" VerticalAlignment="Top" Width="92" Source="index-logo.png" Grid.Column="2"/>
         <TabControl Grid.ColumnSpan="2" Margin="6,12,7,89" Grid.Column="1">
-            <TabItem Header="梁柱框架" Margin="-2,-2,-147,0">
+            <TabItem Header="梁柱框架" Margin="-2,-2,-119,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="83*"/>
@@ -43,41 +43,43 @@
                     <Button x:Name="SelectPEC" Content="选择生成PEC" HorizontalAlignment="Left" Height="33" Margin="30,177,0,0" VerticalAlignment="Top" Width="105" Click="SelectPEC_Click" Grid.Column="2"/>
                 </Grid>
             </TabItem>
-            <TabItem Header="PEC剪力墙" Margin="68,-2,-199,0">
+            <TabItem Header="PEC剪力墙" Margin="118,-2,-236,0">
                 <Grid Margin="3,0,-3,0">
                     <Button x:Name="Arrange_PEC_Wall" Content="PEC 墙" HorizontalAlignment="Left" Height="60" Margin="269,351,0,0" VerticalAlignment="Top" Width="136" Click="Arrange_PEC_Wall_Click"/>
-                    <ComboBox x:Name="Cmb_rot_s2" HorizontalAlignment="Left" Margin="399,8,0,0" VerticalAlignment="Top" Width="60" />
+                    <ComboBox x:Name="Cmb_rot_s2" HorizontalAlignment="Left" Margin="378,14,0,0" VerticalAlignment="Top" Width="60" />
                     <TextBox x:Name="TextBox_H1" HorizontalAlignment="Left" Height="22" Margin="87,104,0,0" TextWrapping="Wrap" Text="H600*300*10*20" VerticalAlignment="Top" Width="113"/>
                     <TextBox x:Name="TextBox_H2" HorizontalAlignment="Left" Height="23" Margin="88,134,0,0" TextWrapping="Wrap" Text="H300*300*10*20" VerticalAlignment="Top" Width="113"/>
                     <Label Content="型钢柱1" HorizontalAlignment="Left" Margin="24,102,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.49,0.522"/>
-                    <TextBox x:Name="TextBox_T1" HorizontalAlignment="Left" Margin="202,52,0,0" TextWrapping="Wrap" Text="300" VerticalAlignment="Top" Width="54"/>
+                    <TextBox x:Name="TextBox_T1" HorizontalAlignment="Left" Margin="213,50,0,0" TextWrapping="Wrap" Text="300" VerticalAlignment="Top" Width="54"/>
                     <TextBox x:Name="TextBox_L1" HorizontalAlignment="Left" Margin="87,50,0,0" TextWrapping="Wrap" Text="1500" VerticalAlignment="Top" Width="54"/>
-                    <TextBox x:Name="TextBox_T2" HorizontalAlignment="Center" Margin="0,78,0,0" TextWrapping="Wrap" Text="300" VerticalAlignment="Top" Width="54"/>
+                    <TextBox x:Name="TextBox_T2" HorizontalAlignment="Left" Margin="213,78,0,0" TextWrapping="Wrap" Text="300" VerticalAlignment="Top" Width="54"/>
                     <TextBox x:Name="TextBox_L2" HorizontalAlignment="Left" Margin="88,78,0,0" TextWrapping="Wrap" Text="1500" VerticalAlignment="Top" Width="54"/>
-                    <ComboBox x:Name="Cmb_Shape" HorizontalAlignment="Left" Margin="120,10,0,0" VerticalAlignment="Top" Width="80" SelectionChanged="Cmb_Shape_SelectionChanged"/>
-                    <Label Content="长边墙长" HorizontalAlignment="Left" Margin="28,44,0,0" VerticalAlignment="Top"/>
-                    <TextBox x:Name="TextBox_n_s1" HorizontalAlignment="Left" Height="19" Margin="163,205,0,0" TextWrapping="Wrap" Text="2" VerticalAlignment="Top" Width="47" />
-                    <TextBox x:Name="TextBox_n_s2" HorizontalAlignment="Left" Height="19" Margin="163,236,0,0" TextWrapping="Wrap" Text="2" VerticalAlignment="Top" Width="47"/>
-                    <Label Content="长边墙厚" HorizontalAlignment="Left" Margin="143,48,0,0" VerticalAlignment="Top"/>
-                    <Label Content="短边墙长" HorizontalAlignment="Left" Margin="24,72,0,0" VerticalAlignment="Top"/>
-                    <Label Content="短边墙厚" HorizontalAlignment="Left" Margin="146,74,0,0" VerticalAlignment="Top"/>
-                    <TextBox x:Name="TextBox_T" HorizontalAlignment="Left" Margin="108,166,0,0" TextWrapping="Wrap" Text="10*20" VerticalAlignment="Top" Width="120"/>
+                    <ComboBox x:Name="Cmb_Shape" HorizontalAlignment="Left" Margin="99,16,0,0" VerticalAlignment="Top" Width="80" SelectionChanged="Cmb_Shape_SelectionChanged"/>
+                    <Label Content="长边墙长" HorizontalAlignment="Left" Margin="20,44,0,0" VerticalAlignment="Top"/>
+                    <TextBox x:Name="TextBox_n_s1" HorizontalAlignment="Left" Height="19" Margin="163,219,0,0" TextWrapping="Wrap" Text="2" VerticalAlignment="Top" Width="47" />
+                    <TextBox x:Name="TextBox_n_s2" HorizontalAlignment="Left" Height="19" Margin="163,252,0,0" TextWrapping="Wrap" Text="2" VerticalAlignment="Top" Width="47"/>
+                    <Label Content="长边墙厚" HorizontalAlignment="Left" Margin="150,46,0,0" VerticalAlignment="Top"/>
+                    <Label Content="短边墙长" HorizontalAlignment="Left" Margin="20,74,0,0" VerticalAlignment="Top"/>
+                    <Label Content="短边墙厚" HorizontalAlignment="Left" Margin="150,74,0,0" VerticalAlignment="Top"/>
+                    <TextBox x:Name="TextBox_T" HorizontalAlignment="Left" Margin="108,192,0,0" TextWrapping="Wrap" Text="10*20" VerticalAlignment="Top" Width="120"/>
                     <Label Content="型钢柱2" HorizontalAlignment="Left" Margin="22,132,0,0" VerticalAlignment="Top"/>
-                    <Label Content="T型截面tw*tf" HorizontalAlignment="Left" Margin="22,162,0,0" VerticalAlignment="Top"/>
-                    <Label Content="竖向分布加劲板个数" HorizontalAlignment="Left" Margin="31,206,0,0" VerticalAlignment="Top"/>
-                    <Label Content="横向分布加劲板个数" HorizontalAlignment="Left" Margin="31,236,0,0" VerticalAlignment="Top"/>
-                    <Label Content="竖向分布加劲板厚度" HorizontalAlignment="Left" Margin="226,206,0,0" VerticalAlignment="Top"/>
-                    <Label Content="横向分布加劲板厚度" HorizontalAlignment="Left" Margin="226,236,0,0" VerticalAlignment="Top"/>
-                    <TextBox x:Name="TextBox_s1_t" HorizontalAlignment="Left" Height="19" Margin="349,211,0,0" TextWrapping="Wrap" Text="8" VerticalAlignment="Top" Width="47" />
-                    <TextBox x:Name="TextBox_s2_t" HorizontalAlignment="Left" Height="19" Margin="349,242,0,0" TextWrapping="Wrap" Text="6" VerticalAlignment="Top" Width="47"/>
-                    <Label Content="剪力墙形状" HorizontalAlignment="Left" Margin="40,8,0,0" VerticalAlignment="Top"/>
-                    <Label Content="转角方向" HorizontalAlignment="Left" Margin="337,6,0,0" VerticalAlignment="Top"/>
-                    <ComboBox x:Name="combox_mat_wall" HorizontalAlignment="Left" Height="22" Margin="151,274,0,0" VerticalAlignment="Top" Width="78" SelectionChanged="ComboBox_SelectionChanged_1"/>
+                    <Label Content="T型截面tw*tf" HorizontalAlignment="Left" Margin="22,188,0,0" VerticalAlignment="Top"/>
+                    <Label Content="长边加劲板个数" HorizontalAlignment="Left" Margin="31,220,0,0" VerticalAlignment="Top"/>
+                    <Label Content="短边加劲板个数" HorizontalAlignment="Left" Margin="31,249,0,0" VerticalAlignment="Top"/>
+                    <Label Content="长边加劲板厚度" HorizontalAlignment="Left" Margin="226,220,0,0" VerticalAlignment="Top"/>
+                    <Label Content="短边加劲板厚度" HorizontalAlignment="Left" Margin="226,249,0,0" VerticalAlignment="Top"/>
+                    <TextBox x:Name="TextBox_s1_t" HorizontalAlignment="Left" Height="19" Margin="346,220,0,0" TextWrapping="Wrap" Text="8" VerticalAlignment="Top" Width="47" />
+                    <TextBox x:Name="TextBox_s2_t" HorizontalAlignment="Left" Height="19" Margin="346,250,0,0" TextWrapping="Wrap" Text="6" VerticalAlignment="Top" Width="47"/>
+                    <Label Content="剪力墙形状" HorizontalAlignment="Left" Margin="19,14,0,0" VerticalAlignment="Top"/>
+                    <Label Content="转角方向" HorizontalAlignment="Left" Margin="316,12,0,0" VerticalAlignment="Top"/>
+                    <ComboBox x:Name="combox_mat_wall" HorizontalAlignment="Left" Height="22" Margin="151,288,0,0" VerticalAlignment="Top" Width="78" SelectionChanged="ComboBox_SelectionChanged_1"/>
                     <Button x:Name="Button_AddMaterialWallPEC" Content="增加钢材型号" HorizontalAlignment="Left" Margin="34,318,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_WallPECMat"/>
                     <TextBox x:Name="MaterialTextBoxWallPEC" HorizontalAlignment="Left" Height="22" Margin="151,318,0,0" TextWrapping="Wrap" Text="Q355B" VerticalAlignment="Top" Width="78"/>
-                    <Label Content="钢材型号" HorizontalAlignment="Left" Margin="31,272,0,0" VerticalAlignment="Top"/>
-                    <Label Content="墙高度" HorizontalAlignment="Left" Margin="209,8,0,0" VerticalAlignment="Top"/>
-                    <TextBox x:Name="TextBox_WallHeight" HorizontalAlignment="Left" Margin="260,12,0,0" TextWrapping="Wrap" Text="3500" VerticalAlignment="Top" Width="54"/>
+                    <Label Content="钢材型号" HorizontalAlignment="Left" Margin="31,286,0,0" VerticalAlignment="Top"/>
+                    <Label Content="墙高度" HorizontalAlignment="Left" Margin="188,14,0,0" VerticalAlignment="Top"/>
+                    <TextBox x:Name="TextBox_WallHeight" HorizontalAlignment="Left" Margin="239,18,0,0" TextWrapping="Wrap" Text="3500" VerticalAlignment="Top" Width="54"/>
+                    <Label Content="长边钢板厚度" HorizontalAlignment="Left" Margin="24,162,0,0" VerticalAlignment="Top"/>
+                    <TextBox x:Name="TextBox_P1_tw" HorizontalAlignment="Left" Margin="108,166,0,0" TextWrapping="Wrap" Text="10" VerticalAlignment="Top" Width="71"/>
                 </Grid>
             </TabItem>
         </TabControl>
