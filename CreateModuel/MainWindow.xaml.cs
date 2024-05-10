@@ -136,6 +136,8 @@ namespace TestTekla
                 //ProfileList 新模型所需截面
 
                 List<List<string>> StandardProfileList = Import_Standard_ProfileList("H");
+                
+                
                 //import beam section
 
                 for (int x = 0; x < profileBeamData.Rows.Count; x++)
@@ -161,7 +163,7 @@ namespace TestTekla
 
 
 
-                // import columb section
+                // import column section
                 for (int x = 0; x < profileColumData.Rows.Count; x++)
                 {
                     string Profile_temp = profileColumData.Rows[x].ItemArray[1].ToString().Split(' ')[2].Replace('X', '*');
@@ -188,7 +190,7 @@ namespace TestTekla
                 ProfileList.AddRange(ProfileList_column);
 
 
-                List<LibraryProfileItem> profileL = new List<LibraryProfileItem>();
+                List<LibraryProfileItem> profileL_Tekla = new List<LibraryProfileItem>();
                 List<MaterialItem> materialL = new List<MaterialItem>();
 
                 CatalogHandler CatalogHandler = new CatalogHandler();
@@ -199,13 +201,13 @@ namespace TestTekla
                 MaterialItemEnumerator MaterialItemEn = CatalogHandler.GetMaterialItems();
 
 
-                //profileL 现有Tekla截面库
+                //profileL_Tekla 现有Tekla截面库
 
                 while (ProfileItemEnumerator.MoveNext())
                 {
                     LibraryProfileItem LibraryProfileItem = ProfileItemEnumerator.Current as LibraryProfileItem;
 
-                    profileL.Add(LibraryProfileItem);
+                    profileL_Tekla.Add(LibraryProfileItem);
 
                 }
 
@@ -222,11 +224,11 @@ namespace TestTekla
                 for (int i = 0; i < ProfileList.Count; i++)
                 {
                     int Flag = 0;
-                    for (int j = 0; j < profileL.Count; j++)
+                    for (int j = 0; j < profileL_Tekla.Count; j++)
                     {
                         string Profile1 = ProfileList[i].Replace("*@PEC", "");
-                       //if (ProfileList[i].Contains(profileL[j].ProfileName))
-                       if (profileL[j].ProfileName.Contains(Profile1))
+                       //if (ProfileList[i].Contains(profileL_Tekla[j].ProfileName))
+                       if (profileL_Tekla[j].ProfileName.Contains(Profile1))
                         {
                             Flag++;
                         }
@@ -477,7 +479,7 @@ namespace TestTekla
                     Tekla.Structures.Geometry3d.Point EPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(endStr.Split(',')[0]), Convert.ToDouble(endStr.Split(',')[1]), Convert.ToDouble(endStr.Split(',')[2]));
 
                     string section_name = tableBeam.Rows[i].ItemArray[3].ToString();
-                    string ProfileBeam_org = section_name.Split(' ')[2];
+                    string ProfileBeam_org = section_name.Split(' ').Last();// 提取最后一个字段 H300x200x10x15
                     string ProfileBeam = ProfileBeam_org.Replace('X', '*');//.Substring(1);
 
                     //在ProfileList_Beam中匹配包含 ProfileBeam的项，如果存在，将ProfileBeam赋值为ProfileList_Beam中的项，如果不存在，保留原值
@@ -505,11 +507,11 @@ namespace TestTekla
 
 
                     beam.Profile.ProfileString = "";
-                    for (int x = 0; x < profileL.Count; x++)
+                    for (int x = 0; x < profileL_Tekla.Count; x++)
                     {
-                        if (profileL[x].ProfileName==(ProfileBeam))
+                        if (profileL_Tekla[x].ProfileName==(ProfileBeam))
                         {
-                            beam.Profile.ProfileString = profileL[x].ProfileName;
+                            beam.Profile.ProfileString = profileL_Tekla[x].ProfileName;
                             break;
                         }
                     }
@@ -796,7 +798,7 @@ namespace TestTekla
 
                     string endStr = table.Rows[i].ItemArray[2].ToString().Substring(1, table.Rows[i].ItemArray[2].ToString().Length - 2);
 
-                    string ProfileColumn_org = table.Rows[i].ItemArray[3].ToString().Split(' ')[2];
+                    string ProfileColumn_org = table.Rows[i].ItemArray[3].ToString().Split(' ').Last();
                     string ProfileColumn = ProfileColumn_org.Replace('X', '*');//.Substring(1);
 
                     ProfileColumn = Profile_Standardize(ProfileColumn, StandardProfileList);
@@ -812,12 +814,21 @@ namespace TestTekla
 
                     column.Profile.ProfileString = "";
 
-                    for (int x = 0; x < profileL.Count; x++)
+                    for (int x = 0; x < profileL_Tekla.Count; x++)
                     {
-                        if (profileL[x].ProfileName.Contains(ProfileColumn))
+                        if (profileL_Tekla[x].ProfileName.Contains(ProfileColumn))
                         {
-                            column.Profile.ProfileString = profileL[x].ProfileName;//ProfileColumn;
+                            column.Profile.ProfileString = profileL_Tekla[x].ProfileName;//ProfileColumn;
                         }
+                    }
+
+                    if (column.Profile.ProfileString == "")
+                    {
+                        column.Profile.ProfileString = profileL_Tekla[1].ProfileName;
+                        column.Class = "99";
+
+                        //messagebox 显示 “截面缺失”+ProfileColumn
+                        System.Windows.Forms.MessageBox.Show("截面缺失" + ProfileColumn);
                     }
 
                     column.Position.Plane = Position.PlaneEnum.MIDDLE;
@@ -1302,7 +1313,7 @@ namespace TestTekla
                     sw.WriteLine("}");
                     sw.WriteLine("");
                 }
-                else if (section_type == "B")
+                else if (section_type.StartsWith( "B"))
                 {
                     double H = Convert.ToDouble(section_size.Split('*')[0]);
                     double W = Convert.ToDouble(section_size.Split('*')[1]);
