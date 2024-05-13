@@ -734,7 +734,7 @@
                 {
                 "Name" = "8:.NET Framework"
                 "Message" = "8:[VSDNETMSG]"
-                "FrameworkVersion" = "8:v4.5  "
+                "FrameworkVersion" = "8:v4.5   "
                 "AllowLaterVersions" = "11:FALSE"
                 "InstallUrl" = "8:http://go.microsoft.com/fwlink/?LinkId=395269"
                 }
@@ -1686,15 +1686,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:CreateTeklaModel"
-        "ProductCode" = "8:{0121C504-F022-4628-AA2A-8EE4C76AF0B5}"
-        "PackageCode" = "8:{066C6793-00D4-4F6D-B93D-5D704B0E9A21}"
+        "ProductCode" = "8:{310059BE-7C72-4AD9-BAFE-DAAD1AE34B42}"
+        "PackageCode" = "8:{8DD5D02F-664F-4E26-A29A-2AFCA562012E}"
         "UpgradeCode" = "8:{82F284A2-88D6-4F85-998E-E64E4CF2848F}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:3.9.5"
+        "ProductVersion" = "8:3.9.7"
         "Manufacturer" = "8:GBS_Software"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"

@@ -5,16 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TestTekla"
         mc:Ignorable="d"
-        Title="生成模型 V3.9.5" Height="646.874" Width="500.671">
+        Title="生成模型 V3.9.7" Height="646.874" Width="500.671">
     <Grid Margin="0,0,2,4">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="8*"/>
-            <ColumnDefinition Width="64*"/>
-            <ColumnDefinition Width="427*"/>
+            <ColumnDefinition Width="24*"/>
+            <ColumnDefinition Width="40*"/>
+            <ColumnDefinition Width="47*"/>
+            <ColumnDefinition Width="380*"/>
         </Grid.ColumnDefinitions>
-        <Label Content="© 创新研究院-BIM数字中心" Margin="65,575,108,0" RenderTransformOrigin="0.54,2.064" FontSize="10" FontWeight="Bold" Height="22" VerticalAlignment="Top" Grid.Column="2"/>
-        <Image HorizontalAlignment="Left" Height="31" Margin="263,575,0,0" VerticalAlignment="Top" Width="92" Source="index-logo.png" Grid.Column="2"/>
-        <TabControl Grid.ColumnSpan="2" Margin="6,12,7,89" Grid.Column="1">
+        <Label Content="© 创新研究院-BIM数字中心" Margin="18,575,108,0" RenderTransformOrigin="0.54,2.064" FontSize="10" FontWeight="Bold" Height="22" VerticalAlignment="Top" Grid.Column="4"/>
+        <Image HorizontalAlignment="Left" Height="31" Margin="216,575,0,0" VerticalAlignment="Top" Width="92" Source="index-logo.png" Grid.Column="4"/>
+        <TabControl Grid.ColumnSpan="4" Margin="6,12,7,89" Grid.Column="1">
             <TabItem Header="梁柱框架" Margin="-2,-2,-119,0">
                 <Grid>
                     <Grid.ColumnDefinitions>

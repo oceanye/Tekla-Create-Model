@@ -553,11 +553,11 @@ namespace TestTekla
 
                     if (comboBox.SelectionBoxItem.ToString() == "是")// 此段可以删除，中心线始终位于钢梁翼缘顶部
                     {
-                        beam.StartPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[11]);
-                        beam.EndPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]);
+                        beam.StartPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]);
+                        beam.EndPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[13]);
 
-                        beam.StartPointOffset.Dz = Convert.ToDouble(tableBeam.Rows[i].ItemArray[15]);
-                        beam.EndPointOffset.Dz = Convert.ToDouble(tableBeam.Rows[i].ItemArray[16]);
+                        beam.StartPointOffset.Dz = Convert.ToDouble(tableBeam.Rows[i].ItemArray[16]);
+                        beam.EndPointOffset.Dz = Convert.ToDouble(tableBeam.Rows[i].ItemArray[17]);
                     }
                     else
                     {
@@ -806,7 +806,7 @@ namespace TestTekla
                     //List<List<string>> StandardProfileList = Import_Standard_ProfileList();
                     //string ProfilePrex = Profile_Check(ProfileColumn, StandardProfileList);
 
-                    string MaterialColumn = table.Rows[i].ItemArray[11].ToString();
+                    string MaterialColumn = table.Rows[i].ItemArray[12].ToString();
 
                     column.StartPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(startStr.Split(',')[0]), Convert.ToDouble(startStr.Split(',')[1]), Convert.ToDouble(startStr.Split(',')[2]));
 
@@ -839,7 +839,7 @@ namespace TestTekla
                     column.Position.Rotation = Position.RotationEnum.TOP;
 
 
-                    column.Position.RotationOffset = Convert.ToDouble(table.Rows[i].ItemArray[10].ToString()) - 90;
+                    column.Position.RotationOffset = Convert.ToDouble(table.Rows[i].ItemArray[11].ToString()) - 90;
 
 
                     int flag = 0;
