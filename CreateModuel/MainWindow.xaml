@@ -82,6 +82,7 @@
                     <TextBox x:Name="TextBox_WallHeight" HorizontalAlignment="Left" Margin="239,18,0,0" TextWrapping="Wrap" Text="3500" VerticalAlignment="Top" Width="54"/>
                     <Label Content="长边钢板厚度" HorizontalAlignment="Left" Margin="24,162,0,0" VerticalAlignment="Top"/>
                     <TextBox x:Name="TextBox_P1_tw" HorizontalAlignment="Left" Margin="108,166,0,0" TextWrapping="Wrap" Text="10" VerticalAlignment="Top" Width="71"/>
+                    <CheckBox x:Name="checkbox_PECWall_Conc" Content="混凝土" HorizontalAlignment="Left" Margin="34,370,0,0" VerticalAlignment="Top" IsEnabled="False"/>
                 </Grid>
             </TabItem>
         </TabControl>

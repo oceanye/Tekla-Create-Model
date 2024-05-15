@@ -1858,6 +1858,29 @@ namespace TestTekla
                 columnT.Insert();
 
 
+                if (checkbox_PECWall_Conc.IsChecked == true)
+                {
+                    //建立混凝土
+                    Beam columnT1_Concrete = new Beam();
+
+
+                    columnT1_Concrete.Profile.ProfileString = "BL" + (L2 - H1_b) + "*" + T2;//"PL1000*20";
+                    columnT1_Concrete.Material.MaterialString = "C30";
+                    columnT1_Concrete.Class = "1";
+                    columnT1_Concrete.StartPoint = pickedPoint;
+                    columnT1_Concrete.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + Wall_Height);
+                    columnT1_Concrete.Position.Depth = Position.DepthEnum.MIDDLE;
+                    columnT1_Concrete.Position.Plane = Position.PlaneEnum.MIDDLE;
+                    columnT1_Concrete.Position.Rotation = Position.RotationEnum.BACK;
+                    columnT1_Concrete.Position.PlaneOffset = -1 * ((L2 - H1_b) / 2 + T1 / 2);
+                    columnT1_Concrete.Position.RotationOffset = 0 + 180 * (r_s2 - 1) / -2; // r_s2 = 1 -> rotataion =0  r_s2=-1 -》rotation=180 
+                    columnT1_Concrete.Position.DepthOffset = -r_s2 * (H1_h / 2 - T1_b / 2);
+                    columnT1_Concrete.Insert();
+                }
+
+
+
+
                 Weld weldHT = new Weld();
                 weldHT.MainObject = column;
                 weldHT.SecondaryObject = columnT;
@@ -1920,6 +1943,29 @@ namespace TestTekla
 
 
             //混凝土部分
+
+            if (checkbox_PECWall_Conc.IsChecked == true)
+            {
+                Beam columnP1_Concrete = new Beam();
+
+
+                columnP1_Concrete.Profile.ProfileString = "BL" + L1 + "*" + T1;//"PL1000*20";
+                columnP1_Concrete.Material.MaterialString = "C30";
+                columnP1_Concrete.Class = "1";
+                columnP1_Concrete.StartPoint = pickedPoint;
+                columnP1_Concrete.EndPoint = new Point(pickedPoint.X, pickedPoint.Y, pickedPoint.Z + Wall_Height);
+                columnP1_Concrete.Position.Depth = Position.DepthEnum.MIDDLE;
+                columnP1_Concrete.Position.Plane = Position.PlaneEnum.MIDDLE;
+                columnP1_Concrete.Position.Rotation = Position.RotationEnum.TOP;
+                columnP1_Concrete.Position.DepthOffset = L1 / 2 - H1_h / 2;
+                columnP1_Concrete.Position.RotationOffset = 0;
+                columnP1_Concrete.Insert();
+
+            }
+
+
+
+
 
             //未完成
 
