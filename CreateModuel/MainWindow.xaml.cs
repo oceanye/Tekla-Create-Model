@@ -973,17 +973,14 @@ namespace TestTekla
 
 
             // Create main assembly
-            Assembly mainAssembly = new Assembly();
-            mainAssembly.Name = "MainAssembly";
-            mainAssembly.Insert();
-
-            mainAssembly.Add(beam_C1);
-            mainAssembly.SetMainPart(beam_C1);
-            
+            Assembly mainAssembly = beam_C1.GetAssembly();
             mainAssembly.Add(beam_C2);
+
+            mainAssembly.Add(beam);
+
             mainAssembly.Modify();
 
-            
+
             //找到包含beam的assembly，并加入到mainAssembly
             //mainAssembly.Add(beam.GetAssembly());
 
