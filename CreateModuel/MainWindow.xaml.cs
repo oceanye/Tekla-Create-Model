@@ -438,7 +438,29 @@ namespace TestTekla
                 {
 
                 }
-                
+
+
+                #endregion
+
+
+
+                #region View
+                Tekla.Structures.Model.UI.View View3d = new Tekla.Structures.Model.UI.View();
+
+                ModelViewEnumerator ViewEnum = ViewHandler.GetAllViews();
+                while (ViewEnum.MoveNext())
+                {
+                    View3d = ViewEnum.Current;
+                    //ViewHandler.HideView(View);
+                }
+
+
+                //View.Name = "3D Model View";
+
+                View3d.ViewDepthUp = 200000;
+                View3d.ViewDepthDown = 10000;
+                View3d.Modify();
+
 
                 #endregion
 
@@ -886,6 +908,10 @@ namespace TestTekla
 
 
                 #endregion
+
+
+
+
 
 
                 conn.Close();
@@ -1618,11 +1644,20 @@ namespace TestTekla
             // 历遍每个选中的对象
             while (selectedObjects.MoveNext())
             {
-                Beam selectedBeam = selectedObjects.Current as Beam;
-                if (selectedBeam != null)
+                Beam selectedBeam = new Beam();
+                try
                 {
-                    CreatePEC(selectedBeam);
+                    selectedBeam = selectedObjects.Current as Beam;
+                    if (selectedBeam != null)
+                    {
+                        CreatePEC(selectedBeam);
+                    }
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("检查编号: "+ selectedBeam.Identifier.ToString() + ex.Message);
+                }
+
             }
         }
 
