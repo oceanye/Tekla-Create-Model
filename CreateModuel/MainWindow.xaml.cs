@@ -33,6 +33,8 @@ using ModelObjectSelector = Tekla.Structures.Model.UI.ModelObjectSelector;
 using static Tekla.Structures.Model.Part;
 using Weld = Tekla.Structures.Model.Weld;
 using MessageBox = System.Windows.MessageBox;
+using System.Drawing;
+using System.Data.Common;
 
 
 namespace TestTekla
@@ -136,15 +138,15 @@ namespace TestTekla
                 //ProfileList 新模型所需截面
 
                 List<List<string>> StandardProfileList = Import_Standard_ProfileList("H");
-                
-                
+
+
                 //import beam section
 
                 for (int x = 0; x < profileBeamData.Rows.Count; x++)
                 {
                     string Profile_temp = profileBeamData.Rows[x].ItemArray[1].ToString().Split(' ')[2].Replace('X', '*');
 
-                    Profile_temp=Profile_Standardize(Profile_temp, StandardProfileList);
+                    Profile_temp = Profile_Standardize(Profile_temp, StandardProfileList);
 
                     ProfileList_beam.Add(Profile_temp);
                 }
@@ -227,8 +229,8 @@ namespace TestTekla
                     for (int j = 0; j < profileL_Tekla.Count; j++)
                     {
                         string Profile1 = ProfileList[i].Replace("*@PEC", "");
-                       //if (ProfileList[i].Contains(profileL_Tekla[j].ProfileName))
-                       if (profileL_Tekla[j].ProfileName.Contains(Profile1))
+                        //if (ProfileList[i].Contains(profileL_Tekla[j].ProfileName))
+                        if (profileL_Tekla[j].ProfileName.Contains(Profile1))
                         {
                             Flag++;
                         }
@@ -434,7 +436,7 @@ namespace TestTekla
 
                     modelNewGrid.CommitChanges();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
 
                 }
@@ -512,7 +514,7 @@ namespace TestTekla
                     string MaterialBeam = tableBeam.Rows[i].ItemArray[18].ToString();
 
                     Tekla.Structures.Geometry3d.Point VectorPoint = new Tekla.Structures.Geometry3d.Point(EPoint.X - SPoint.X, EPoint.Y - SPoint.Y, EPoint.Z - SPoint.Z);
-                    
+
 
 
 
@@ -531,7 +533,7 @@ namespace TestTekla
                     beam.Profile.ProfileString = "";
                     for (int x = 0; x < profileL_Tekla.Count; x++)
                     {
-                        if (profileL_Tekla[x].ProfileName==(ProfileBeam))
+                        if (profileL_Tekla[x].ProfileName == (ProfileBeam))
                         {
                             beam.Profile.ProfileString = profileL_Tekla[x].ProfileName;
                             break;
@@ -560,10 +562,10 @@ namespace TestTekla
                             break;
                         case "截面区分":
                             int color_index = 0;
-                            try 
+                            try
                             { color_index = ProfileList_beam_color[beam.Profile.ProfileString]; }
-                            catch(Exception)
-                            { System.Windows.Forms.MessageBox.Show("检查截面"+ ProfileBeam); }
+                            catch (Exception)
+                            { System.Windows.Forms.MessageBox.Show("检查截面" + ProfileBeam); }
 
                             beam.Class = color_index.ToString();
                             break;
@@ -603,7 +605,7 @@ namespace TestTekla
                     }
 
 
-                    
+
 
 
 
@@ -659,7 +661,7 @@ namespace TestTekla
                     for (int x = 0; x < holetable.Rows.Count; x++)
                     {
 
-                        
+
                         if (holetable.Rows[x].ItemArray[5].ToString().Equals(tableBeam.Rows[i].ItemArray[0].ToString()))
                         {
                             Console.WriteLine("Hole：" + (holetable.Rows[x].ItemArray[0].ToString()));
@@ -709,6 +711,64 @@ namespace TestTekla
 
                                 Cir_hole = Cir_hole + 1;
 
+
+                                List<double> sectionValues = phraseHSection(beam.Profile.ProfileString);
+                                //double H = sectionValues[0];
+                                double B = sectionValues[1];
+                                //double tw = sectionValues[2];
+                                //double tf = sectionValues[3];
+
+                                double D = 2 * rc;
+                                double pt;
+
+                                switch (D)
+                                {
+                                    case 63.5:
+                                        pt = 6;
+                                        break;
+                                    case 95:
+                                        pt = 7;
+                                        break;
+                                    case 121:
+                                        pt = 8;
+                                        break;
+                                    case 168:
+                                        pt = 10;
+                                        break;
+                                    case 219:
+                                        pt = 10;
+                                        break;
+                                    case 273:
+                                        pt = 10;
+                                        break;
+                                    default:
+                                        pt = 1;
+                                        break;
+                                }
+
+
+                                Beam Hole_Pipe = new Beam();
+                                Hole_Pipe.Profile.ProfileString ="PIP"+ D + "*"+pt;
+                                Hole_Pipe.Material.MaterialString = "Q235";
+
+                                Plane Web_Plane = new Plane();
+                                Web_Plane.Origin = beam.StartPoint;
+
+                                Tekla.Structures.Geometry3d.Vector v1 = new Tekla.Structures.Geometry3d.Vector(beam.StartPoint.X-beam.EndPoint.X, beam.StartPoint.Y-beam.EndPoint.Y,beam.StartPoint.Z-beam.EndPoint.Z);
+
+                                Web_Plane.AxisX = v1;
+                                Web_Plane.AxisY = Tekla.Structures.Geometry3d.Vector.Cross(v1,n1);
+
+                                Hole_Pipe.StartPoint = center + n1.GetNormal() * Convert.ToInt32(B) * 0.5;
+                                Hole_Pipe.EndPoint = center - n1.GetNormal() * Convert.ToInt32(B)*0.5;
+
+                                Hole_Pipe.Position.Depth = Position.DepthEnum.MIDDLE;
+
+                                if (chkbox_hole_pipe.IsChecked == true)
+                                { Hole_Pipe.Insert(); }
+                                    
+                                
+
                             }
                             else
                             {
@@ -748,7 +808,7 @@ namespace TestTekla
                             CP.Material.MaterialString = "K30-2";
                             CP.Class = BooleanPart.BooleanOperativeClassName;
 
-                            
+
                             CP.Insert();
 
                             Console.WriteLine("CP:" + CP.Identifier);
@@ -760,9 +820,6 @@ namespace TestTekla
 
                             Beam.Insert();
                             CP.Delete();
-
-
-
 
 
 
@@ -855,7 +912,7 @@ namespace TestTekla
 
                     column.Position.Plane = Position.PlaneEnum.MIDDLE;
 
-                    column.Position.Depth = Position.DepthEnum.MIDDLE;
+                    
 
 
                     column.Position.Rotation = Position.RotationEnum.TOP;
@@ -948,8 +1005,8 @@ namespace TestTekla
             {
                 // 使用捕获组提取四个数字
 
-                    //要求是int sectionValues.AddRange((match.Groups.Cast<Group>().Skip(2).Select(g => g.Value)));
-                    sectionValues.AddRange((match.Groups.Cast<Group>().Skip(2).Select(g => Convert.ToDouble(g.Value))));
+                //要求是int sectionValues.AddRange((match.Groups.Cast<Group>().Skip(2).Select(g => g.Value)));
+                sectionValues.AddRange((match.Groups.Cast<Group>().Skip(2).Select(g => Convert.ToDouble(g.Value))));
 
             }
 
@@ -1015,7 +1072,7 @@ namespace TestTekla
             model.CommitChanges();
         }
 
-        
+
 
         static void ConvertGrid(List<string> LabelList, List<string> gridPointList, out List<string> letterList, out List<string> numberList, out List<double> List_dist_A, out List<double> List_dist_1)
         {
@@ -1099,8 +1156,8 @@ namespace TestTekla
 
             List<string> profileValues = new List<string>();
 
-            section_type=(matches.Groups[1].Value);
-            section_size=(matches.Groups[2].Value);
+            section_type = (matches.Groups[1].Value);
+            section_size = (matches.Groups[2].Value);
 
             if (matches.Success)
             {
@@ -1123,7 +1180,7 @@ namespace TestTekla
                 section_type_standard = "BH";
             }
 
-            if(section_type =="H")
+            if (section_type == "H")
             {
                 Profile_new = section_type_standard + section_size;
             }
@@ -1143,16 +1200,16 @@ namespace TestTekla
 
             string filePath = "";
             //读取文件StandardProfileList.txt
-            
+
             if (shape_type == "H")
             {
                 filePath = "D://Program Files//GBS_Software//CreateTeklaModel//H_Profile_Standard.txt";
             }
-            
+
             try
             {
                 string[] lines = File.ReadAllLines(filePath);
-                foreach( string line in lines)
+                foreach (string line in lines)
                 {
                     string[] values = line.Split(',');
                     Match matches = Regex.Match(line, @"^([A-Za-z]+)(\d.*)$");
@@ -1161,20 +1218,20 @@ namespace TestTekla
 
                     profileValues.Add(matches.Groups[1].Value);
                     profileValues.Add(matches.Groups[2].Value);
-                    
+
                     Standard_ProfileList.Add(profileValues);
                 }
 
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
 
             }
             return Standard_ProfileList;
         }
 
-    static bool ParallelAxis(string point1, string point2)
+        static bool ParallelAxis(string point1, string point2)
         {
             Point p1 = ParsePointString(point1);
             Point p2 = ParsePointString(point2);
@@ -1265,7 +1322,7 @@ namespace TestTekla
 
 
 
-    public void CreateNewProfileFile(string filePath, List<string> pList)
+        public void CreateNewProfileFile(string filePath, List<string> pList)
         {
             if (Directory.Exists(filePath) == false)
             {
@@ -1302,15 +1359,15 @@ namespace TestTekla
 
 
 
-                if (section_type.Contains( 'H'))
+                if (section_type.Contains('H'))
                 {
                     double H = Convert.ToDouble(section_size.Split('*')[0]);
                     double W = Convert.ToDouble(section_size.Split('*')[1]);
                     double F = Convert.ToDouble(section_size.Split('*')[2]);
                     double Y = Convert.ToDouble(section_size.Split('*')[3]);
 
-                    double Area=Convert.ToDouble(H*W-(H-2*Y)*(W-F));
-                    double Weight_Length= Convert.ToDouble(Area*7850*1e-6);
+                    double Area = Convert.ToDouble(H * W - (H - 2 * Y) * (W - F));
+                    double Weight_Length = Convert.ToDouble(Area * 7850 * 1e-6);
 
                     string profileType = "1001";
 
@@ -1321,7 +1378,7 @@ namespace TestTekla
 
                     sw.WriteLine("PROFILE_NAME = " + "\"" + profileName + "\"" + ";");
                     sw.WriteLine("{");
-                    sw.WriteLine("  TYPE = 1; SUB_TYPE = "+profileType+"; COORDINATE = 0.000;");
+                    sw.WriteLine("  TYPE = 1; SUB_TYPE = " + profileType + "; COORDINATE = 0.000;");
                     sw.WriteLine("  {");
                     sw.WriteLine("    \"HEIGHT\"" + "                           " + H);
                     sw.WriteLine("    \"WIDTH\"" + "                           " + W);
@@ -1336,14 +1393,14 @@ namespace TestTekla
                     sw.WriteLine("}");
                     sw.WriteLine("");
                 }
-                else if (section_type.StartsWith( "B"))
+                else if (section_type.StartsWith("B"))
                 {
                     double H = Convert.ToDouble(section_size.Split('*')[0]);
                     double W = Convert.ToDouble(section_size.Split('*')[1]);
                     double F = Convert.ToDouble(section_size.Split('*')[2]);
                     //double Y = Convert.ToDouble(profileName.Split('*')[3]);
 
-                    double Area = Convert.ToDouble(H * W - (H - 2 * F) * (W - 2*F));
+                    double Area = Convert.ToDouble(H * W - (H - 2 * F) * (W - 2 * F));
                     double Weight_Length = Convert.ToDouble(Area * 7850 * 1e-6);
 
 
@@ -1366,7 +1423,7 @@ namespace TestTekla
                     double D = Convert.ToDouble(section_size.Split('*')[0]);
                     double t = Convert.ToDouble(section_size.Split('*')[1]);
 
-                    double Area = Convert.ToDouble((D * D - (D - 2 * t) * (D - 2 * t))/4*3.14);
+                    double Area = Convert.ToDouble((D * D - (D - 2 * t) * (D - 2 * t)) / 4 * 3.14);
                     double Weight_Length = Convert.ToDouble(Area * 7850 * 1e-6);
 
 
@@ -1503,7 +1560,7 @@ namespace TestTekla
         public void combox_mat_beam_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
 
-            
+
 
         }
 
@@ -1522,15 +1579,15 @@ namespace TestTekla
 
                 //Refresh_Material_List();
                 //Material xxx = catalogHandler.GetMaterial("Q345");
-                 while (MaterialItemEn.MoveNext())
+                while (MaterialItemEn.MoveNext())
                 {
-                MaterialItem materialItem = MaterialItemEn.Current as MaterialItem;
-                //materialL.Add(materialItem);
-                string mat_temp = materialItem.MaterialName;
-                     if (materialItem.MaterialName.Contains("Q345"))
+                    MaterialItem materialItem = MaterialItemEn.Current as MaterialItem;
+                    //materialL.Add(materialItem);
+                    string mat_temp = materialItem.MaterialName;
+                    if (materialItem.MaterialName.Contains("Q345"))
                     {
 
-                            MaterialItem newMaterial = materialItem.Copy();
+                        MaterialItem newMaterial = materialItem.Copy();
 
                         if (mattype == "wall")
                             newMaterial.MaterialName = MaterialTextBoxWallPEC.Text;
@@ -1538,25 +1595,25 @@ namespace TestTekla
                         {
                             newMaterial.MaterialName = MaterialTextBox.Text;
                         }
-                           
-                            newMaterial.PlateDensity = 7850;
-                            newMaterial.ProfileDensity = 7850;
-                            newMaterial.Insert();
 
-                            //newMaterial.MaterialName = "111";
-                            //newMaterial.Insert();
+                        newMaterial.PlateDensity = 7850;
+                        newMaterial.ProfileDensity = 7850;
+                        newMaterial.Insert();
 
-                            //bool t = newMaterial.Modify();
+                        //newMaterial.MaterialName = "111";
+                        //newMaterial.Insert();
 
-                            //MaterialItem newMaterial=new MaterialItem();
-                            //newMaterial.Insert();
-                            //newMaterial.MaterialName = "Q355";
-                            //newMaterial.Copy();
+                        //bool t = newMaterial.Modify();
 
-                            break;
-                     }
+                        //MaterialItem newMaterial=new MaterialItem();
+                        //newMaterial.Insert();
+                        //newMaterial.MaterialName = "Q355";
+                        //newMaterial.Copy();
 
-                 }
+                        break;
+                    }
+
+                }
 
             }
             catch
@@ -1655,7 +1712,7 @@ namespace TestTekla
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("检查编号: "+ selectedBeam.Identifier.ToString() + ex.Message);
+                    Console.WriteLine("检查编号: " + selectedBeam.Identifier.ToString() + ex.Message);
                 }
 
             }
@@ -1721,7 +1778,7 @@ namespace TestTekla
             double Wall_Height = Convert.ToDouble(TextBox_WallHeight.Text);
 
             //if sectionValue_H1[1] 不等于 T1 或者 sectionValue_H2[1] 不等于T1,showmessage 检查截面
-            if (sectionValues_H1[1] != T1 )
+            if (sectionValues_H1[1] != T1)
             {
                 //MessageBox.Show("检查截面尺寸"),点击确认关闭后，return
 
@@ -1736,7 +1793,7 @@ namespace TestTekla
                 //MessageBox.Show("检查截面尺寸"),点击确认关闭后，return
 
                 MessageBox.Show("检查两个型钢柱截面宽度尺寸");
-                
+
 
 
             }
@@ -1744,17 +1801,17 @@ namespace TestTekla
 
 
 
-            double H1_h =  sectionValues_H1[0]; //600;
-            double H1_b =  T1;
-            double H1_tw = sectionValues_H1[2] ;
-            double H1_tf = sectionValues_H1[3] ;
+            double H1_h = sectionValues_H1[0]; //600;
+            double H1_b = T1;
+            double H1_tw = sectionValues_H1[2];
+            double H1_tf = sectionValues_H1[3];
 
-            double H2_h =  sectionValues_H2[0];
-            double H2_b =  sectionValues_H2[1];
+            double H2_h = sectionValues_H2[0];
+            double H2_b = sectionValues_H2[1];
             double H2_tw = sectionValues_H2[2];
             double H2_tf = sectionValues_H2[3];
 
-            double T1_h = L2-(H1_b/2+H1_tw/2);
+            double T1_h = L2 - (H1_b / 2 + H1_tw / 2);
             double T1_b = T2;
             double T1_tw = Convert.ToDouble(TextBox_T.Text.Split('*')[0]);
             double T1_tf = Convert.ToDouble(TextBox_T.Text.Split('*')[1]);
@@ -1769,7 +1826,7 @@ namespace TestTekla
             //长边加劲板
             int n_s1 = Convert.ToInt32(TextBox_n_s1.Text);
             double s1_b = (T1 - P1_tw) / 2;
-            double s1_t = Convert.ToDouble (TextBox_s1_t.Text);
+            double s1_t = Convert.ToDouble(TextBox_s1_t.Text);
 
 
             //短边加劲板
@@ -1777,7 +1834,7 @@ namespace TestTekla
             double s2_b = (T2 - T1_tw) / 2;
             double s2_t = Convert.ToDouble(TextBox_s2_t.Text);
             //如果cmb_rot_s2 选左，则 r_s2=-1,否则r_s2=1
-            int r_s2 ; // 1-右侧；-1-左侧；
+            int r_s2; // 1-右侧；-1-左侧；
 
             if (Cmb_rot_s2.SelectedIndex == 0)
             {
@@ -1787,9 +1844,9 @@ namespace TestTekla
             {
                 r_s2 = 1;
             }
-            
+
             Beam column = new Beam();
-            column.Profile.ProfileString = "HI"+H1_h+"-"+H1_tw + "-" + H1_tf + "*" + H1_b;//"HI600-15-20*300";
+            column.Profile.ProfileString = "HI" + H1_h + "-" + H1_tw + "-" + H1_tf + "*" + H1_b;//"HI600-15-20*300";
             column.Material.MaterialString = MaterialWallPEC;
             column.Class = "7";
             column.StartPoint = pickedPoint;
@@ -1810,7 +1867,7 @@ namespace TestTekla
             column1.Position.Plane = Position.PlaneEnum.MIDDLE;
             column1.Position.Rotation = Position.RotationEnum.TOP;
             column1.Position.RotationOffset = 0;
-            column1.Position.DepthOffset = L1-H1_h/2-H2_h/2;
+            column1.Position.DepthOffset = L1 - H1_h / 2 - H2_h / 2;
             column1.Insert();
 
 
@@ -1820,7 +1877,7 @@ namespace TestTekla
             Beam columnS1A = new Beam();
 
 
-            columnP1.Profile.ProfileString = "PL"+ P1_h+"*"+P1_tw;//"PL1000*20";
+            columnP1.Profile.ProfileString = "PL" + P1_h + "*" + P1_tw;//"PL1000*20";
             columnP1.Material.MaterialString = MaterialWallPEC;
             columnP1.Class = "7";
             columnP1.StartPoint = pickedPoint;
@@ -1828,7 +1885,7 @@ namespace TestTekla
             columnP1.Position.Depth = Position.DepthEnum.MIDDLE;
             columnP1.Position.Plane = Position.PlaneEnum.MIDDLE;
             columnP1.Position.Rotation = Position.RotationEnum.TOP;
-            columnP1.Position.DepthOffset = H1_h/2+P1_h/2;
+            columnP1.Position.DepthOffset = H1_h / 2 + P1_h / 2;
             columnP1.Position.RotationOffset = 0;
             columnP1.Insert();
 
@@ -1838,15 +1895,15 @@ namespace TestTekla
 
 
 
-            for (int mirr = -1; mirr < 2; mirr=mirr+2)//加劲板镜像侧布置 -1 1
+            for (int mirr = -1; mirr < 2; mirr = mirr + 2)//加劲板镜像侧布置 -1 1
             {
 
                 for (int i = 1; i < (n_s1 + 1); i++)
                 {
-                double d_T1 = H1_h / 2+P1_h / (n_s1 + 1) * (i);
+                    double d_T1 = H1_h / 2 + P1_h / (n_s1 + 1) * (i);
 
 
-                    
+
                     columnS1A.Profile.ProfileString = "PL" + s1_b + "*" + s1_t;// "PL150*10";
                     columnS1A.Material.MaterialString = MaterialWallPEC;
                     columnS1A.Class = "7";
@@ -1932,7 +1989,7 @@ namespace TestTekla
                         double d_T2 = T1_h / (n_s2 + 1) * (i);
 
 
-                        
+
                         columnS2A.Profile.ProfileString = "PL" + s2_b + "*" + s2_t;
                         columnS2A.Material.MaterialString = MaterialWallPEC;
                         columnS2A.Class = "7";
@@ -2033,6 +2090,41 @@ namespace TestTekla
         private void Button_Click_WallPECMat(object sender, RoutedEventArgs e)
         {
             CopyMaterial("wall");
+        }
+
+        private void button_hole_pipe_Click(object sender, RoutedEventArgs e)
+        {
+
+            #region 筛选梁上留设洞口
+            Model myModel = new Model();
+
+            List<Tekla.Structures.Model.Beam> objectToSelectBeam = new List<Tekla.Structures.Model.Beam>();
+
+            ModelObjectSelector selector = new ModelObjectSelector();
+
+            // 获取当前选中的对象
+            ModelObjectEnumerator selectedObjects = selector.GetSelectedObjects();
+
+            // 历遍每个选中的对象
+            while (selectedObjects.MoveNext())
+            {
+                Beam selectedBeam = new Beam();
+                Beam item  = selectedObjects.Current as Beam;
+
+                try
+                {
+
+
+                    //ModelObjectEnumerator myEnumHole = myModel.GetModelObjectSelector().GetAllObjectsWithType(Tekla.Structures.Model.ModelObject.ModelObjectEnum.hole);
+
+
+                }
+                catch (Exception ex) { }
+
+            }
+
+            #endregion 筛选梁上洞口
+
         }
     }
 }
