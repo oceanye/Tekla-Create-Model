@@ -718,7 +718,7 @@ namespace TestTekla
                                 //double tw = sectionValues[2];
                                 //double tf = sectionValues[3];
 
-                                double D = 2 * rc;
+                                double D = Math.Round(2 * rc,2);
                                 double pt;
 
                                 switch (D)
@@ -765,7 +765,7 @@ namespace TestTekla
                                 Hole_Pipe.Position.Depth = Position.DepthEnum.MIDDLE;
 
                                 if (chkbox_hole_pipe.IsChecked == true)
-                                { Hole_Pipe.Insert(); }
+                                { Hole_Pipe.Insert();}
                                     
                                 
 
