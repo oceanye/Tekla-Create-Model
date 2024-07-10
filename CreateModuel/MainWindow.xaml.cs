@@ -210,7 +210,7 @@ namespace TestTekla
                     int Flag = 0;
                     for (int j = 0; j < profileL.Count; j++)
                     {
-                        string Profile1 = ProfileList[i].Replace("*@PEC", "");
+                        string Profile1 = ProfileList[i];//.Replace("*@PEC", "");
                        //if (ProfileList[i].Contains(profileL[j].ProfileName))
                        if (profileL[j].ProfileName.Contains(Profile1))
                         {
@@ -471,7 +471,7 @@ namespace TestTekla
 
 
 
-                    string MaterialBeam = tableBeam.Rows[i].ItemArray[17].ToString();
+                    string MaterialBeam = tableBeam.Rows[i].ItemArray[18].ToString();
 
                     Tekla.Structures.Geometry3d.Point VectorPoint = new Tekla.Structures.Geometry3d.Point(EPoint.X - SPoint.X, EPoint.Y - SPoint.Y, EPoint.Z - SPoint.Z);
                     
@@ -484,9 +484,9 @@ namespace TestTekla
                     {
                         Output_Text.AppendText("存在T型截面，需核对构件方向");
                     }
-                    beam.StartPoint = GetNewStartPoint(SPoint, VectorPoint, Convert.ToDouble(tableBeam.Rows[i].ItemArray[11]));
+                    beam.StartPoint = GetNewStartPoint(SPoint, VectorPoint, Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]));
 
-                    beam.EndPoint = GetNewStartPoint(EPoint, VectorPoint, Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]));
+                    beam.EndPoint = GetNewStartPoint(EPoint, VectorPoint, Convert.ToDouble(tableBeam.Rows[i].ItemArray[13]));
 
 
 
@@ -525,7 +525,7 @@ namespace TestTekla
                             try 
                             { color_index = ProfileList_beam_color[beam.Profile.ProfileString]; }
                             catch(Exception)
-                            { System.Windows.Forms.MessageBox.Show("检查截面"+ ProfileBeam); }
+                            { System.Windows.Forms.MessageBox.Show("检查截面 Revit:"+ ProfileBeam+"/Tekla:"+ beam.Profile.ProfileString); }
 
                             beam.Class = color_index.ToString();
                             break;
@@ -537,11 +537,11 @@ namespace TestTekla
 
                     if (comboBox.SelectionBoxItem.ToString() == "是")// 此段可以删除，中心线始终位于钢梁翼缘顶部
                     {
-                        beam.StartPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[11]);
-                        beam.EndPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]);
+                        beam.StartPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]);
+                        beam.EndPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[13]);
 
-                        beam.StartPointOffset.Dz = Convert.ToDouble(tableBeam.Rows[i].ItemArray[15]);
-                        beam.EndPointOffset.Dz = Convert.ToDouble(tableBeam.Rows[i].ItemArray[16]);
+                        beam.StartPointOffset.Dz = Convert.ToDouble(tableBeam.Rows[i].ItemArray[16]);
+                        beam.EndPointOffset.Dz = Convert.ToDouble(tableBeam.Rows[i].ItemArray[17]);
                     }
                     else
                     {
@@ -565,17 +565,17 @@ namespace TestTekla
                     }
 
 
-                    
 
 
 
-                    #region 测试
 
+                    #region PEC信息
 
-                    beam.SetUserProperty("comment", "1");
+                    if (tableBeam.Rows[i].ItemArray[4] == "PEC")
+                    { beam.SetUserProperty("USER_FIELD_2", "PEC"); }
                     #endregion
 
-                    #region 交点
+                    #region PC墙板挂点信息坐标
 
                     CoordinateSystem beamLocalCS = beam.GetCoordinateSystem();
 
@@ -790,7 +790,7 @@ namespace TestTekla
                     //List<List<string>> StandardProfileList = Import_Standard_ProfileList();
                     //string ProfilePrex = Profile_Check(ProfileColumn, StandardProfileList);
 
-                    string MaterialColumn = table.Rows[i].ItemArray[11].ToString();
+                    string MaterialColumn = table.Rows[i].ItemArray[12].ToString();
 
                     column.StartPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(startStr.Split(',')[0]), Convert.ToDouble(startStr.Split(',')[1]), Convert.ToDouble(startStr.Split(',')[2]));
 
@@ -814,7 +814,7 @@ namespace TestTekla
                     column.Position.Rotation = Position.RotationEnum.TOP;
 
 
-                    column.Position.RotationOffset = Convert.ToDouble(table.Rows[i].ItemArray[10].ToString()) - 90;
+                    column.Position.RotationOffset = Convert.ToDouble(table.Rows[i].ItemArray[11].ToString()) - 90;
 
 
                     int flag = 0;
@@ -839,7 +839,17 @@ namespace TestTekla
                             column.Class = "3";
                             break;
                         case "截面区分":
-                            column.Class = ProfileList_column_color[column.Profile.ProfileString].ToString();
+                            
+
+                            int color_index = 0;
+                            try
+                            { color_index = ProfileList_column_color[column.Profile.ProfileString]; }
+                            catch (Exception)
+                            { System.Windows.Forms.MessageBox.Show("检查截面" + ProfileColumn); }
+
+                            column.Class = color_index.ToString();
+
+
                             break;
                     }
 
