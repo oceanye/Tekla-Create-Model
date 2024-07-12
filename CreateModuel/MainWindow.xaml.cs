@@ -227,6 +227,7 @@ namespace TestTekla
                 {
                     int Flag = 0;
                     for (int j = 0; j < profileL_Tekla.Count; j++)
+
                     {
                         string Profile1 = ProfileList[i].Replace("*@PEC", "");
                         //if (ProfileList[i].Contains(profileL_Tekla[j].ProfileName))
@@ -234,6 +235,7 @@ namespace TestTekla
                         {
                             Flag++;
                         }
+
                     }
 
 
@@ -245,752 +247,755 @@ namespace TestTekla
 
                 }
 
-                if (PList.Count > 0)
+            if (PList.Count > 0)
+            {
+                Model myModel = new Model();
+                string path = myModel.GetInfo().ModelPath + "\\";
+                CreateNewProfileFile(path, PList);
+                //ShowForm sf = new TestTekla.ShowForm(PList);
+                //sf.ShowDialog();
+
+                //  如果原有截面库不完全，提示重新导入截面
+                DialogResult result = System.Windows.Forms.MessageBox.Show("截面缺失，请重新导入工程文件下:截面文件.lis", "提示", MessageBoxButtons.OK, MessageBoxIcon.Question);
+
+                if (result == System.Windows.Forms.DialogResult.OK)
                 {
-                    Model myModel = new Model();
-                    string path = myModel.GetInfo().ModelPath + "\\";
-                    CreateNewProfileFile(path, PList);
-                    //ShowForm sf = new TestTekla.ShowForm(PList);
-                    //sf.ShowDialog();
-
-                    //  如果原有截面库不完全，提示重新导入截面
-                    DialogResult result = System.Windows.Forms.MessageBox.Show("截面缺失，请重新导入工程文件下:截面文件.lis", "提示", MessageBoxButtons.OK, MessageBoxIcon.Question);
-
-                    if (result == System.Windows.Forms.DialogResult.OK)
-                    {
-                        Environment.Exit(0);
-
-                    }
-
+                    Environment.Exit(0);
 
                 }
-
-
-                #region 删除原始轴网
-                Model myModelGrid = new Model();
-
-                List<Tekla.Structures.Model.Grid> objectToSelectGrid = new List<Tekla.Structures.Model.Grid>();
-
-
-                ModelObjectEnumerator myEnumFitting = myModelGrid.GetModelObjectSelector().GetAllObjectsWithType(Tekla.Structures.Model.ModelObject.ModelObjectEnum.GRID);
-
-
-                while (myEnumFitting.MoveNext())
-                {
-                    objectToSelectGrid.Add(myEnumFitting.Current as Tekla.Structures.Model.Grid);
-                }
-
-
-                foreach (Tekla.Structures.Model.Grid g in objectToSelectGrid)
-                {
-                    g.Delete();
-                }
-
-                myModelGrid.CommitChanges();
-
-
-                #endregion
-
-                #region 生成新标高
-                cmd.CommandText = "SELECT*FROM LevelTable";
-
-                SQLiteDataAdapter adapterLevel = new SQLiteDataAdapter(cmd);
-                DataSet dsLevel = new DataSet();
-                adapterLevel.Fill(dsLevel);
-
-                DataTable tableLevel = dsLevel.Tables[0];
-
-                Model modelNewGrid = new Model();
-
-                Tekla.Structures.Model.Grid grid = new Tekla.Structures.Model.Grid();
-
-                string Z = "";
-
-                string LabelZ = "+0 ";
-
-                for (int i = 0; i < tableLevel.Rows.Count; i++)
-                {
-                    Z += tableLevel.Rows[i].ItemArray[2].ToString() + " ";
-
-                    LabelZ += tableLevel.Rows[i].ItemArray[1].ToString() + " ";
-                }
-
-                #endregion
-
-                #region 生成新轴网
-                try
-                {
-                    cmd.CommandText = "SELECT*FROM GridTable";
-
-                    SQLiteDataAdapter adapterGrid = new SQLiteDataAdapter(cmd);
-                    DataSet dsGrid = new DataSet();
-                    adapterLevel.Fill(dsGrid);
-
-                    DataTable tableGrid = dsGrid.Tables[0];
-
-                    List<string> LabelList = new List<string>();
-                    List<string> gridPointList = new List<string>();
-
-                    List<List<string>> gridInfo = new List<List<string>>();
-
-
-
-                    //Console.WriteLine(LabelList);
-                    for (int i = 0; i < tableGrid.Rows.Count; i++)
-                    {
-                        string column1Value = tableGrid.Rows[i][1].ToString();
-                        string column2Value = tableGrid.Rows[i][2].ToString().Split(';')[0];
-                        string column3Value = tableGrid.Rows[i][2].ToString().Split(';')[1];
-
-                        List<string> row = new List<string> { column1Value, column2Value, column3Value };
-
-                        gridInfo.Add(row);
-
-                        //LabelList.Add( tableGrid.Rows[i].ItemArray[1].ToString() );
-
-                        //gridPointList.Add(tableGrid.Rows[i].ItemArray[2].ToString());
-                    }
-
-
-                    List<List<string>> letterList = new List<List<string>>();
-                    List<List<string>> numberList = new List<List<string>>();
-
-                    foreach (List<string> sublist in gridInfo)
-                    {
-
-                        // 使用 LINQ 查询来检查元素是否包含数字
-
-                        if (ParallelAxis(sublist[1], sublist[2]) == true) // 只保留平行于坐标轴的轴网 
-                        {
-                            if (sublist[0].Any(char.IsDigit))
-                            {
-                                numberList.Add(sublist);
-                            }
-                            else
-                            {
-                                letterList.Add(sublist);
-                            }
-
-                        }
-
-
-                    }
-                    // letter - Y
-                    // number - X
-
-                    List<double> dist_letterList = new List<double>();
-                    List<double> dist_numberList = new List<double>();
-
-                    List<string> label_letterList = new List<string>();
-                    List<string> label_numberList = new List<string>();
-
-                    label_letterList = letterList.Select(sublist => sublist.First()).ToList();
-                    label_numberList = numberList.Select(sublist => sublist.First()).ToList();
-
-                    dist_letterList.Add(ParsePointString(letterList[0][1]).Y);
-                    dist_numberList.Add(ParsePointString(numberList[0][1]).X);
-
-                    for (int i = 1; i < letterList.Count; i++)
-                    {
-
-                        double d1 = DistaceAxis(letterList[i - 1][1], letterList[i - 1][2], letterList[i][1]);
-                        dist_letterList.Add(d1);
-
-
-                    }
-
-                    for (int i = 1; i < numberList.Count; i++)
-                    {
-
-                        double d1 = DistaceAxis(numberList[i - 1][1], numberList[i - 1][2], numberList[i][1]);
-                        dist_numberList.Add(d1);
-
-                    }
-
-                    //List<string> letterList;
-                    //List<string> numberList;
-                    //List<double> List_dist_A;
-                    //List<double> List_dist_1;
-
-                    //ConvertGrid(LabelList, gridPointList, out letterList, out numberList, out List_dist_A, out List_dist_1);
-
-                    grid.Name = "Grid";
-                    grid.CoordinateX = string.Join(" ", dist_numberList);
-                    grid.CoordinateY = string.Join(" ", dist_letterList);
-                    grid.CoordinateZ = Z;
-                    grid.LabelX = string.Join(" ", label_numberList);
-                    grid.LabelY = string.Join(" ", label_letterList);
-                    grid.LabelZ = LabelZ;
-
-                    grid.ExtensionLeftX = 2000;
-                    grid.ExtensionLeftY = 2000;
-                    grid.ExtensionLeftZ = 2000;
-
-                    grid.ExtensionRightX = 2000;
-                    grid.ExtensionRightY = 2000;
-                    grid.ExtensionRightZ = 2000;
-
-                    grid.IsMagnetic = true;
-
-                    grid.Insert();
-
-                    modelNewGrid.CommitChanges();
-                }
-                catch (Exception ex)
-                {
-
-                }
-
-
-                #endregion
-
-
-
-                #region View
-                Tekla.Structures.Model.UI.View View3d = new Tekla.Structures.Model.UI.View();
-
-                ModelViewEnumerator ViewEnum = ViewHandler.GetAllViews();
-                while (ViewEnum.MoveNext())
-                {
-                    View3d = ViewEnum.Current;
-                    //ViewHandler.HideView(View);
-                }
-
-
-                //View.Name = "3D Model View";
-
-                View3d.ViewDepthUp = 200000;
-                View3d.ViewDepthDown = 10000;
-                View3d.Modify();
-
-
-                #endregion
-
-
-                #region 创建梁
-
-                cmd.CommandText = "SELECT*FROM MemberBeam";
-
-                SQLiteDataAdapter adapterBeam = new SQLiteDataAdapter(cmd);
-                DataSet dsBeam = new DataSet();
-                adapterBeam.Fill(dsBeam);
-
-                DataTable tableBeam = dsBeam.Tables[0];
-                Model model = new Model();
-
-                MonitorCheck form = new MonitorCheck();
-                form.Show();
-                int T = 0;
-
-                int Rec_hole = 0;
-                int Cir_hole = 0;
-
-                for (int i = 0; i < tableBeam.Rows.Count; i++)
-                {
-                    T++;
-                    form.SetTextMesssage(T, tableBeam.Rows.Count);//进度条函数
-
-
-                    #region
-                    Beam beam = new Beam();
-
-                    string startStr = tableBeam.Rows[i].ItemArray[1].ToString().Substring(1, tableBeam.Rows[i].ItemArray[1].ToString().Length - 2);
-
-                    string endStr = tableBeam.Rows[i].ItemArray[2].ToString().Substring(1, tableBeam.Rows[i].ItemArray[2].ToString().Length - 2);
-
-                    Tekla.Structures.Geometry3d.Point SPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(startStr.Split(',')[0]), Convert.ToDouble(startStr.Split(',')[1]), Convert.ToDouble(startStr.Split(',')[2]));
-
-                    Tekla.Structures.Geometry3d.Point EPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(endStr.Split(',')[0]), Convert.ToDouble(endStr.Split(',')[1]), Convert.ToDouble(endStr.Split(',')[2]));
-
-                    string section_name = tableBeam.Rows[i].ItemArray[3].ToString();
-                    string ProfileBeam_org = section_name.Split(' ').Last();// 提取最后一个字段 H300x200x10x15
-                    string ProfileBeam = ProfileBeam_org.Replace('X', '*');//.Substring(1);
-
-                    //在ProfileList_Beam中匹配包含 ProfileBeam的项，如果存在，将ProfileBeam赋值为ProfileList_Beam中的项，如果不存在，保留原值
-                    ProfileBeam = Profile_Standardize(ProfileBeam, StandardProfileList);
-
-
-
-                    string MaterialBeam = tableBeam.Rows[i].ItemArray[18].ToString();
-
-                    Tekla.Structures.Geometry3d.Point VectorPoint = new Tekla.Structures.Geometry3d.Point(EPoint.X - SPoint.X, EPoint.Y - SPoint.Y, EPoint.Z - SPoint.Z);
-
-
-
-
-
-
-                    if (ProfileBeam.StartsWith("T"))
-                    {
-                        Output_Text.AppendText("存在T型截面，需核对构件方向");
-                    }
-                    beam.StartPoint = GetNewStartPoint(SPoint, VectorPoint, Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]));
-
-                    beam.EndPoint = GetNewStartPoint(EPoint, VectorPoint, Convert.ToDouble(tableBeam.Rows[i].ItemArray[13]));
-
-
-
-                    beam.Profile.ProfileString = "";
-                    for (int x = 0; x < profileL_Tekla.Count; x++)
-                    {
-                        if (profileL_Tekla[x].ProfileName == (ProfileBeam))
-                        {
-                            beam.Profile.ProfileString = profileL_Tekla[x].ProfileName;
-                            break;
-                        }
-                    }
-
-                    int flag = 0;
-                    for (int x = 0; x < materialL.Count; x++)
-                    {
-                        if (materialL[x].MaterialName.Contains(MaterialBeam))
-                        {
-                            beam.Material.MaterialString = MaterialBeam;
-                            flag++;
-                        }
-                    }
-                    if (flag == 0)
-                    {
-                        beam.Material.MaterialString = combox_mat_beam.SelectedItem.ToString();
-                    }
-
-                    // 根据combo_color的选择，建立switch case是"构件区分"，和case是"截面区分”
-                    switch (combo_color.SelectionBoxItem.ToString())
-                    {
-                        case "梁柱区分":
-                            beam.Class = "3";
-                            break;
-                        case "截面区分":
-                            int color_index = 0;
-                            try
-                            { color_index = ProfileList_beam_color[beam.Profile.ProfileString]; }
-                            catch (Exception)
-                            { System.Windows.Forms.MessageBox.Show("检查截面" + ProfileBeam); }
-
-                            beam.Class = color_index.ToString();
-                            break;
-                    }
-
-
-                    //将int转换为string
-
-
-                    if (comboBox.SelectionBoxItem.ToString() == "是")// 此段可以删除，中心线始终位于钢梁翼缘顶部
-                    {
-                        beam.StartPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]);
-                        beam.EndPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[13]);
-
-                        beam.StartPointOffset.Dz = Convert.ToDouble(tableBeam.Rows[i].ItemArray[16]);
-                        beam.EndPointOffset.Dz = Convert.ToDouble(tableBeam.Rows[i].ItemArray[17]);
-                    }
-                    else
-                    {
-                        //Revit导出时，设置Y项对正为 LocationLine
-                        //beam.StartPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[11]);
-                        //beam.EndPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]);
-
-                        //beam.StartPoint.Z = beam.StartPoint.Z + Convert.ToDouble(tableBeam.Rows[i].ItemArray[15]);
-                        //beam.EndPoint.Z = beam.EndPoint.Z + Convert.ToDouble(tableBeam.Rows[i].ItemArray[16]);
-                    }
-
-
-
-
-
-                    if (beam.Profile.ProfileString != "")
-                    {
-                        beam.Insert();
-
-
-                    }
-
-
-
-
-
-
-                    #region 测试
-
-
-                    beam.SetUserProperty("comment", "1");
-                    #endregion
-
-                    #region 交点
-
-                    CoordinateSystem beamLocalCS = beam.GetCoordinateSystem();
-
-                    if (beamLocalCS != null)
-                    {
-
-                        GeometricPlane gPlan = new GeometricPlane(beamLocalCS);
-
-
-                        Tekla.Structures.Geometry3d.Vector vector = gPlan.Normal;
-
-                        for (int j = 0; j < tagData.Rows.Count; j++)
-                        {
-                            Tekla.Structures.Geometry3d.Point pt = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(tagData.Rows[j].ItemArray[1]), Convert.ToDouble(tagData.Rows[j].ItemArray[2]), Convert.ToDouble(tagData.Rows[j].ItemArray[3]));
-
-                            Tekla.Structures.Geometry3d.Point ptNew = GetNewStartPointSecond(pt, vector, -1000);
-                            Tekla.Structures.Geometry3d.Point ptNewSecond = GetNewStartPointSecond(pt, vector, 1000);
-
-
-
-                            Tekla.Structures.Geometry3d.Line line = new Tekla.Structures.Geometry3d.Line(pt, ptNew);
-                            Tekla.Structures.Geometry3d.Line lineSecond = new Tekla.Structures.Geometry3d.Line(pt, ptNewSecond);
-
-
-                            Tekla.Structures.Geometry3d.Point pInter = Intersection.LineToPlane(line, gPlan);
-                            Tekla.Structures.Geometry3d.Point pInterSecond = Intersection.LineToPlane(lineSecond, gPlan);
-
-                        }
-                    }
-
-
-
-                    #endregion
-
-                    #endregion
-
-                    #region 孔洞
-
-                    string sqlHole = "SELECT*FROM BeamHoleTable";
-                    DataTable holetable = getData(sqlHole, cmd);
-
-
-                    for (int x = 0; x < holetable.Rows.Count; x++)
-                    {
-
-
-                        if (holetable.Rows[x].ItemArray[5].ToString().Equals(tableBeam.Rows[i].ItemArray[0].ToString()))
-                        {
-                            Console.WriteLine("Hole：" + (holetable.Rows[x].ItemArray[0].ToString()));
-
-                            ContourPlate CP = new ContourPlate();
-
-                            if (holetable.Rows[x].ItemArray[1].ToString().Contains("@"))// 存在@
-                            {
-                                // 中心点
-                                string pc = holetable.Rows[x].ItemArray[1].ToString().Split('@')[1];
-                                pc = pc.Substring(1, pc.Length - 2);
-
-                                // 法线方向
-                                string n1s = holetable.Rows[x].ItemArray[1].ToString().Split('@')[2];
-                                n1s = n1s.Substring(1, n1s.Length - 2);
-
-                                //半径
-                                double rc = Convert.ToDouble(holetable.Rows[x].ItemArray[1].ToString().Split('@')[0]);
-                                Tekla.Structures.Geometry3d.Point center = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(pc.Split(',')[0]), Convert.ToDouble(pc.Split(',')[1]), Convert.ToDouble(pc.Split(',')[2]) + beam.StartPointOffset.Dz);
-
-
-                                double halfSideLength = rc / Math.Sqrt(2);
-
-                                Tekla.Structures.Geometry3d.Vector n1 = new Tekla.Structures.Geometry3d.Vector(Convert.ToDouble(n1s.Split(',')[0]), Convert.ToDouble(n1s.Split(',')[1]), Convert.ToDouble(n1s.Split(',')[2]));
-
-
-                                // 根据法向量计算矩形的四个点
-                                // 根据法向量计算矩形的四个点
-                                Tekla.Structures.Geometry3d.Vector rightDirection = n1.Cross(new Tekla.Structures.Geometry3d.Vector(0, 0, 1)).GetNormal();
-                                Tekla.Structures.Geometry3d.Vector upDirection = n1.Cross(rightDirection).GetNormal();
-
-                                Tekla.Structures.Geometry3d.Point p1 = center + rightDirection * halfSideLength - upDirection * halfSideLength;
-                                Tekla.Structures.Geometry3d.Point p2 = center + rightDirection * halfSideLength + upDirection * halfSideLength;
-                                Tekla.Structures.Geometry3d.Point p3 = center - rightDirection * halfSideLength + upDirection * halfSideLength;
-                                Tekla.Structures.Geometry3d.Point p4 = center - rightDirection * halfSideLength - upDirection * halfSideLength;
-
-
-
-                                // 创建切角对象
-                                Chamfer chamfer = new Chamfer(0, 0, Chamfer.ChamferTypeEnum.CHAMFER_ARC_POINT);
-
-                                // 在添加轮廓点时为其设置切角
-                                CP.AddContourPoint(new ContourPoint(p4, chamfer));
-                                CP.AddContourPoint(new ContourPoint(p3, chamfer));
-                                CP.AddContourPoint(new ContourPoint(p2, chamfer));
-                                CP.AddContourPoint(new ContourPoint(p1, chamfer));
-
-                                Cir_hole = Cir_hole + 1;
-
-
-                                List<double> sectionValues = phraseHSection(beam.Profile.ProfileString);
-                                //double H = sectionValues[0];
-                                double B = sectionValues[1];
-                                //double tw = sectionValues[2];
-                                //double tf = sectionValues[3];
-
-                                double D = Math.Round(2 * rc,2);
-                                double pt;
-
-                                switch (D)
-                                {
-                                    case 63.5:
-                                        pt = 6;
-                                        break;
-                                    case 95:
-                                        pt = 7;
-                                        break;
-                                    case 121:
-                                        pt = 8;
-                                        break;
-                                    case 168:
-                                        pt = 10;
-                                        break;
-                                    case 219:
-                                        pt = 10;
-                                        break;
-                                    case 273:
-                                        pt = 10;
-                                        break;
-                                    default:
-                                        pt = 1;
-                                        break;
-                                }
-
-
-                                Beam Hole_Pipe = new Beam();
-                                Hole_Pipe.Profile.ProfileString ="PIP"+ D + "*"+pt;
-                                Hole_Pipe.Material.MaterialString = "Q235";
-
-                                Plane Web_Plane = new Plane();
-                                Web_Plane.Origin = beam.StartPoint;
-
-                                Tekla.Structures.Geometry3d.Vector v1 = new Tekla.Structures.Geometry3d.Vector(beam.StartPoint.X-beam.EndPoint.X, beam.StartPoint.Y-beam.EndPoint.Y,beam.StartPoint.Z-beam.EndPoint.Z);
-
-                                Web_Plane.AxisX = v1;
-                                Web_Plane.AxisY = Tekla.Structures.Geometry3d.Vector.Cross(v1,n1);
-
-                                Hole_Pipe.StartPoint = center + n1.GetNormal() * Convert.ToInt32(B) * 0.5;
-                                Hole_Pipe.EndPoint = center - n1.GetNormal() * Convert.ToInt32(B)*0.5;
-
-                                Hole_Pipe.Position.Depth = Position.DepthEnum.MIDDLE;
-
-                                if (chkbox_hole_pipe.IsChecked == true)
-                                { Hole_Pipe.Insert();}
-                                    
-                                
-
-                            }
-                            else
-                            {
-                                string p1 = holetable.Rows[x].ItemArray[1].ToString().Substring(1, holetable.Rows[x].ItemArray[1].ToString().Length - 2);
-                                string p2 = holetable.Rows[x].ItemArray[2].ToString().Substring(1, holetable.Rows[x].ItemArray[2].ToString().Length - 2);
-                                string p3 = holetable.Rows[x].ItemArray[3].ToString().Substring(1, holetable.Rows[x].ItemArray[3].ToString().Length - 2);
-                                string p4 = holetable.Rows[x].ItemArray[4].ToString().Substring(1, holetable.Rows[x].ItemArray[4].ToString().Length - 2);
-
-
-
-
-                                Tekla.Structures.Geometry3d.Point Pt1 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p1.Split(',')[0]), Convert.ToDouble(p1.Split(',')[1]), Convert.ToDouble(p1.Split(',')[2]) + beam.StartPointOffset.Dz);
-                                Tekla.Structures.Geometry3d.Point Pt2 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p2.Split(',')[0]), Convert.ToDouble(p2.Split(',')[1]), Convert.ToDouble(p2.Split(',')[2]) + beam.StartPointOffset.Dz);
-                                Tekla.Structures.Geometry3d.Point Pt3 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p3.Split(',')[0]), Convert.ToDouble(p3.Split(',')[1]), Convert.ToDouble(p3.Split(',')[2]) + beam.StartPointOffset.Dz);
-                                Tekla.Structures.Geometry3d.Point Pt4 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p4.Split(',')[0]), Convert.ToDouble(p4.Split(',')[1]), Convert.ToDouble(p4.Split(',')[2]) + beam.StartPointOffset.Dz);
-
-                                if (Pt1 != Pt2)
-                                {
-
-                                    ContourPoint point = new ContourPoint(Pt1, null);
-                                    ContourPoint point1 = new ContourPoint(Pt2, null);
-                                    ContourPoint point2 = new ContourPoint(Pt3, null);
-                                    ContourPoint point3 = new ContourPoint(Pt4, null);
-
-
-                                    CP.AddContourPoint(point);
-                                    CP.AddContourPoint(point1);
-                                    CP.AddContourPoint(point2);
-                                    CP.AddContourPoint(point3);
-
-                                    Rec_hole = Rec_hole + 1;
-                                }
-                            }
-
-                            CP.Finish = "FOO";
-                            CP.Profile.ProfileString = "PL800";
-                            CP.Material.MaterialString = "K30-2";
-                            CP.Class = BooleanPart.BooleanOperativeClassName;
-
-
-                            CP.Insert();
-
-                            Console.WriteLine("CP:" + CP.Identifier);
-                            BooleanPart Beam = new BooleanPart();
-
-                            Beam.Father = beam;
-
-                            Beam.SetOperativePart(CP);
-
-                            Beam.Insert();
-                            CP.Delete();
-
-
-
-                        }
-
-
-                    }
-
-
-
-
-
-                    #endregion
-
-
-                    model.CommitChanges();
-
-                }
-                Output_Text.AppendText("生成模型 梁类型:" + ProfileList_beam_color.Count + "种,构件 " + T + "个 \n");
-
-                Output_Text.AppendText("包含梁上开洞" + (Rec_hole + Cir_hole) + "个：方" + Rec_hole + "/圆" + Cir_hole + "个 \n");
-
-
-                #endregion
-
-                #region 创建柱
-
-                cmd.CommandText = "SELECT*FROM MemberColumn";
-
-                SQLiteDataAdapter adapter = new SQLiteDataAdapter(cmd);
-                DataSet ds = new DataSet();
-                adapter.Fill(ds);
-
-                DataTable table = ds.Tables[0];
-
-                Model modelCo = new Model();
-
-                MonitorCheck form1 = new MonitorCheck();
-                form1.Show();
-                int T1 = 0;
-
-                for (int i = 0; i < table.Rows.Count; i++)
-                {
-
-                    T1++;
-                    form1.SetTextMesssage(T1, table.Rows.Count);//进度条函数
-
-
-
-
-
-                    Beam column = new Beam();
-
-                    string startStr = table.Rows[i].ItemArray[1].ToString().Substring(1, table.Rows[i].ItemArray[1].ToString().Length - 2);
-
-                    string endStr = table.Rows[i].ItemArray[2].ToString().Substring(1, table.Rows[i].ItemArray[2].ToString().Length - 2);
-
-                    string ProfileColumn_org = table.Rows[i].ItemArray[3].ToString().Split(' ').Last();
-                    string ProfileColumn = ProfileColumn_org.Replace('X', '*');//.Substring(1);
-
-                    ProfileColumn = Profile_Standardize(ProfileColumn, StandardProfileList);
-
-                    //List<List<string>> StandardProfileList = Import_Standard_ProfileList();
-                    //string ProfilePrex = Profile_Check(ProfileColumn, StandardProfileList);
-
-                    string MaterialColumn = table.Rows[i].ItemArray[12].ToString();
-
-                    column.StartPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(startStr.Split(',')[0]), Convert.ToDouble(startStr.Split(',')[1]), Convert.ToDouble(startStr.Split(',')[2]));
-
-                    column.EndPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(endStr.Split(',')[0]), Convert.ToDouble(endStr.Split(',')[1]), Convert.ToDouble(endStr.Split(',')[2]));
-
-                    column.Profile.ProfileString = "";
-
-                    for (int x = 0; x < profileL_Tekla.Count; x++)
-                    {
-                        if (profileL_Tekla[x].ProfileName.Contains(ProfileColumn))
-                        {
-                            column.Profile.ProfileString = profileL_Tekla[x].ProfileName;//ProfileColumn;
-                        }
-                    }
-
-                    if (column.Profile.ProfileString == "")
-                    {
-                        column.Profile.ProfileString = profileL_Tekla[1].ProfileName;
-                        column.Class = "99";
-
-                        //messagebox 显示 “截面缺失”+ProfileColumn
-                        System.Windows.Forms.MessageBox.Show("截面缺失" + ProfileColumn);
-                    }
-
-                    column.Position.Plane = Position.PlaneEnum.MIDDLE;
-
-                    
-
-
-                    column.Position.Rotation = Position.RotationEnum.TOP;
-
-
-                    column.Position.RotationOffset = Convert.ToDouble(table.Rows[i].ItemArray[11].ToString()) - 90;
-
-
-                    int flag = 0;
-                    for (int x = 0; x < materialL.Count; x++)
-                    {
-                        if (materialL[x].MaterialName.Contains(MaterialColumn))
-                        {
-                            column.Material.MaterialString = MaterialColumn;
-                            flag++;
-                        }
-                    }
-                    if (flag == 0)
-                    {
-                        column.Material.MaterialString = combox_mat_column.SelectedItem.ToString();
-                    }
-
-
-                    // 根据combo_color的选择，建立switch case是"构件区分"，和case是"截面区分”
-                    switch (combo_color.SelectionBoxItem.ToString())
-                    {
-                        case "梁柱区分":
-                            column.Class = "3";
-                            break;
-                        case "截面区分":
-                            column.Class = ProfileList_column_color[column.Profile.ProfileString].ToString();
-                            break;
-                    }
-
-                    column.Name = "column";
-
-
-                    if (column.Profile.ProfileString != "")
-                    {
-                        column.Insert();
-                    }
-
-
-
-
-                    modelCo.CommitChanges();
-                }
-
-                Output_Text.AppendText("生成模型 柱类型:" + ProfileList_column_color.Count + "种，构件" + T1 + "个\n");
-
-
-                #endregion
-
-
-
-
-
-
-                conn.Close();
-
-
-
 
 
             }
 
 
+            #region 删除原始轴网
+            Model myModelGrid = new Model();
+
+            List<Tekla.Structures.Model.Grid> objectToSelectGrid = new List<Tekla.Structures.Model.Grid>();
+
+
+            ModelObjectEnumerator myEnumFitting = myModelGrid.GetModelObjectSelector().GetAllObjectsWithType(Tekla.Structures.Model.ModelObject.ModelObjectEnum.GRID);
+
+
+            while (myEnumFitting.MoveNext())
+            {
+                objectToSelectGrid.Add(myEnumFitting.Current as Tekla.Structures.Model.Grid);
+            }
+
+
+            foreach (Tekla.Structures.Model.Grid g in objectToSelectGrid)
+            {
+                g.Delete();
+            }
+
+            myModelGrid.CommitChanges();
+
+
+            #endregion
+
+            #region 生成新标高
+            cmd.CommandText = "SELECT*FROM LevelTable";
+
+            SQLiteDataAdapter adapterLevel = new SQLiteDataAdapter(cmd);
+            DataSet dsLevel = new DataSet();
+            adapterLevel.Fill(dsLevel);
+
+            DataTable tableLevel = dsLevel.Tables[0];
+
+            Model modelNewGrid = new Model();
+
+            Tekla.Structures.Model.Grid grid = new Tekla.Structures.Model.Grid();
+
+            string Z = "";
+
+            string LabelZ = "+0 ";
+
+            for (int i = 0; i < tableLevel.Rows.Count; i++)
+            {
+                Z += tableLevel.Rows[i].ItemArray[2].ToString() + " ";
+
+                LabelZ += tableLevel.Rows[i].ItemArray[1].ToString() + " ";
+            }
+
+            #endregion
+
+            #region 生成新轴网
+            try
+            {
+                cmd.CommandText = "SELECT*FROM GridTable";
+
+                SQLiteDataAdapter adapterGrid = new SQLiteDataAdapter(cmd);
+                DataSet dsGrid = new DataSet();
+                adapterLevel.Fill(dsGrid);
+
+                DataTable tableGrid = dsGrid.Tables[0];
+
+                List<string> LabelList = new List<string>();
+                List<string> gridPointList = new List<string>();
+
+                List<List<string>> gridInfo = new List<List<string>>();
+
+
+
+                //Console.WriteLine(LabelList);
+                for (int i = 0; i < tableGrid.Rows.Count; i++)
+                {
+                    string column1Value = tableGrid.Rows[i][1].ToString();
+                    string column2Value = tableGrid.Rows[i][2].ToString().Split(';')[0];
+                    string column3Value = tableGrid.Rows[i][2].ToString().Split(';')[1];
+
+                    List<string> row = new List<string> { column1Value, column2Value, column3Value };
+
+                    gridInfo.Add(row);
+
+                    //LabelList.Add( tableGrid.Rows[i].ItemArray[1].ToString() );
+
+                    //gridPointList.Add(tableGrid.Rows[i].ItemArray[2].ToString());
+                }
+
+
+                List<List<string>> letterList = new List<List<string>>();
+                List<List<string>> numberList = new List<List<string>>();
+
+                foreach (List<string> sublist in gridInfo)
+                {
+
+                    // 使用 LINQ 查询来检查元素是否包含数字
+
+                    if (ParallelAxis(sublist[1], sublist[2]) == true) // 只保留平行于坐标轴的轴网 
+                    {
+                        if (sublist[0].Any(char.IsDigit))
+                        {
+                            numberList.Add(sublist);
+                        }
+                        else
+                        {
+                            letterList.Add(sublist);
+                        }
+
+                    }
+
+
+                }
+                // letter - Y
+                // number - X
+
+                List<double> dist_letterList = new List<double>();
+                List<double> dist_numberList = new List<double>();
+
+                List<string> label_letterList = new List<string>();
+                List<string> label_numberList = new List<string>();
+
+                label_letterList = letterList.Select(sublist => sublist.First()).ToList();
+                label_numberList = numberList.Select(sublist => sublist.First()).ToList();
+
+                dist_letterList.Add(ParsePointString(letterList[0][1]).Y);
+                dist_numberList.Add(ParsePointString(numberList[0][1]).X);
+
+                for (int i = 1; i < letterList.Count; i++)
+                {
+
+                    double d1 = DistaceAxis(letterList[i - 1][1], letterList[i - 1][2], letterList[i][1]);
+                    dist_letterList.Add(d1);
+
+
+                }
+
+                for (int i = 1; i < numberList.Count; i++)
+                {
+
+                    double d1 = DistaceAxis(numberList[i - 1][1], numberList[i - 1][2], numberList[i][1]);
+                    dist_numberList.Add(d1);
+
+                }
+
+                //List<string> letterList;
+                //List<string> numberList;
+                //List<double> List_dist_A;
+                //List<double> List_dist_1;
+
+                //ConvertGrid(LabelList, gridPointList, out letterList, out numberList, out List_dist_A, out List_dist_1);
+
+                grid.Name = "Grid";
+                grid.CoordinateX = string.Join(" ", dist_numberList);
+                grid.CoordinateY = string.Join(" ", dist_letterList);
+                grid.CoordinateZ = Z;
+                grid.LabelX = string.Join(" ", label_numberList);
+                grid.LabelY = string.Join(" ", label_letterList);
+                grid.LabelZ = LabelZ;
+
+                grid.ExtensionLeftX = 2000;
+                grid.ExtensionLeftY = 2000;
+                grid.ExtensionLeftZ = 2000;
+
+                grid.ExtensionRightX = 2000;
+                grid.ExtensionRightY = 2000;
+                grid.ExtensionRightZ = 2000;
+
+                grid.IsMagnetic = true;
+
+                grid.Insert();
+
+                modelNewGrid.CommitChanges();
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+
+            #endregion
+
+
+
+            #region View
+            Tekla.Structures.Model.UI.View View3d = new Tekla.Structures.Model.UI.View();
+
+            ModelViewEnumerator ViewEnum = ViewHandler.GetAllViews();
+            while (ViewEnum.MoveNext())
+            {
+                View3d = ViewEnum.Current;
+                //ViewHandler.HideView(View);
+            }
+
+
+            //View.Name = "3D Model View";
+
+            View3d.ViewDepthUp = 200000;
+            View3d.ViewDepthDown = 10000;
+            View3d.Modify();
+
+
+            #endregion
+
+
+            #region 创建梁
+
+            cmd.CommandText = "SELECT*FROM MemberBeam";
+
+            SQLiteDataAdapter adapterBeam = new SQLiteDataAdapter(cmd);
+            DataSet dsBeam = new DataSet();
+            adapterBeam.Fill(dsBeam);
+
+            DataTable tableBeam = dsBeam.Tables[0];
+            Model model = new Model();
+
+            MonitorCheck form = new MonitorCheck();
+            form.Show();
+            int T = 0;
+
+            int Rec_hole = 0;
+            int Cir_hole = 0;
+
+            for (int i = 0; i < tableBeam.Rows.Count; i++)
+            {
+                T++;
+                form.SetTextMesssage(T, tableBeam.Rows.Count);//进度条函数
+
+
+                #region
+                Beam beam = new Beam();
+
+                string startStr = tableBeam.Rows[i].ItemArray[1].ToString().Substring(1, tableBeam.Rows[i].ItemArray[1].ToString().Length - 2);
+
+                string endStr = tableBeam.Rows[i].ItemArray[2].ToString().Substring(1, tableBeam.Rows[i].ItemArray[2].ToString().Length - 2);
+
+                Tekla.Structures.Geometry3d.Point SPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(startStr.Split(',')[0]), Convert.ToDouble(startStr.Split(',')[1]), Convert.ToDouble(startStr.Split(',')[2]));
+
+                Tekla.Structures.Geometry3d.Point EPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(endStr.Split(',')[0]), Convert.ToDouble(endStr.Split(',')[1]), Convert.ToDouble(endStr.Split(',')[2]));
+
+                string section_name = tableBeam.Rows[i].ItemArray[3].ToString();
+                string ProfileBeam_org = section_name.Split(' ').Last();// 提取最后一个字段 H300x200x10x15
+                string ProfileBeam = ProfileBeam_org.Replace('X', '*');//.Substring(1);
+
+                //在ProfileList_Beam中匹配包含 ProfileBeam的项，如果存在，将ProfileBeam赋值为ProfileList_Beam中的项，如果不存在，保留原值
+                ProfileBeam = Profile_Standardize(ProfileBeam, StandardProfileList);
+
+
+
+                string MaterialBeam = tableBeam.Rows[i].ItemArray[18].ToString();
+
+                Tekla.Structures.Geometry3d.Point VectorPoint = new Tekla.Structures.Geometry3d.Point(EPoint.X - SPoint.X, EPoint.Y - SPoint.Y, EPoint.Z - SPoint.Z);
 
 
 
 
 
-            //Close();
+
+                if (ProfileBeam.StartsWith("T"))
+                {
+                    Output_Text.AppendText("存在T型截面，需核对构件方向");
+                }
+                beam.StartPoint = GetNewStartPoint(SPoint, VectorPoint, Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]));
+
+                beam.EndPoint = GetNewStartPoint(EPoint, VectorPoint, Convert.ToDouble(tableBeam.Rows[i].ItemArray[13]));
+
+
+
+                beam.Profile.ProfileString = "";
+                for (int x = 0; x < profileL_Tekla.Count; x++)
+                {
+                    if (profileL_Tekla[x].ProfileName == (ProfileBeam))
+                    {
+                        beam.Profile.ProfileString = profileL_Tekla[x].ProfileName;
+                        break;
+                    }
+                }
+
+                int flag = 0;
+                for (int x = 0; x < materialL.Count; x++)
+                {
+                    if (materialL[x].MaterialName.Contains(MaterialBeam))
+                    {
+                        beam.Material.MaterialString = MaterialBeam;
+                        flag++;
+                    }
+                }
+                if (flag == 0)
+                {
+                    beam.Material.MaterialString = combox_mat_beam.SelectedItem.ToString();
+                }
+
+                // 根据combo_color的选择，建立switch case是"构件区分"，和case是"截面区分”
+                switch (combo_color.SelectionBoxItem.ToString())
+                {
+                    case "梁柱区分":
+                        beam.Class = "3";
+                        break;
+                    case "截面区分":
+                        int color_index = 0;
+                        try
+                        { color_index = ProfileList_beam_color[beam.Profile.ProfileString]; }
+
+                        catch (Exception)
+                        { System.Windows.Forms.MessageBox.Show("检查截面 Revit:" + ProfileBeam + "/Tekla:" + beam.Profile.ProfileString); }
+
+
+                        beam.Class = color_index.ToString();
+                        break;
+                }
+
+
+                //将int转换为string
+
+
+                if (comboBox.SelectionBoxItem.ToString() == "是")// 此段可以删除，中心线始终位于钢梁翼缘顶部
+                {
+                    beam.StartPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]);
+                    beam.EndPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[13]);
+
+                    beam.StartPointOffset.Dz = Convert.ToDouble(tableBeam.Rows[i].ItemArray[16]);
+                    beam.EndPointOffset.Dz = Convert.ToDouble(tableBeam.Rows[i].ItemArray[17]);
+                }
+                else
+                {
+                    //Revit导出时，设置Y项对正为 LocationLine
+                    //beam.StartPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[11]);
+                    //beam.EndPointOffset.Dy = Convert.ToDouble(tableBeam.Rows[i].ItemArray[12]);
+
+                    //beam.StartPoint.Z = beam.StartPoint.Z + Convert.ToDouble(tableBeam.Rows[i].ItemArray[15]);
+                    //beam.EndPoint.Z = beam.EndPoint.Z + Convert.ToDouble(tableBeam.Rows[i].ItemArray[16]);
+                }
 
 
 
 
+
+                if (beam.Profile.ProfileString != "")
+                {
+                    beam.Insert();
+
+
+                }
+
+
+
+
+
+
+                #region PEC信息
+
+                if (tableBeam.Rows[i].ItemArray[4] == "PEC")
+                { beam.SetUserProperty("USER_FIELD_2", "PEC"); }
+                #endregion
+
+                #region PC墙板挂点信息坐标
+
+                CoordinateSystem beamLocalCS = beam.GetCoordinateSystem();
+
+                if (beamLocalCS != null)
+                {
+
+                    GeometricPlane gPlan = new GeometricPlane(beamLocalCS);
+
+
+                    Tekla.Structures.Geometry3d.Vector vector = gPlan.Normal;
+
+                    for (int j = 0; j < tagData.Rows.Count; j++)
+                    {
+                        Tekla.Structures.Geometry3d.Point pt = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(tagData.Rows[j].ItemArray[1]), Convert.ToDouble(tagData.Rows[j].ItemArray[2]), Convert.ToDouble(tagData.Rows[j].ItemArray[3]));
+
+                        Tekla.Structures.Geometry3d.Point ptNew = GetNewStartPointSecond(pt, vector, -1000);
+                        Tekla.Structures.Geometry3d.Point ptNewSecond = GetNewStartPointSecond(pt, vector, 1000);
+
+
+
+                        Tekla.Structures.Geometry3d.Line line = new Tekla.Structures.Geometry3d.Line(pt, ptNew);
+                        Tekla.Structures.Geometry3d.Line lineSecond = new Tekla.Structures.Geometry3d.Line(pt, ptNewSecond);
+
+
+                        Tekla.Structures.Geometry3d.Point pInter = Intersection.LineToPlane(line, gPlan);
+                        Tekla.Structures.Geometry3d.Point pInterSecond = Intersection.LineToPlane(lineSecond, gPlan);
+
+                    }
+                }
+
+
+
+                #endregion
+
+                #endregion
+
+                #region 孔洞
+
+                string sqlHole = "SELECT*FROM BeamHoleTable";
+                DataTable holetable = getData(sqlHole, cmd);
+
+
+                for (int x = 0; x < holetable.Rows.Count; x++)
+                {
+
+
+                    if (holetable.Rows[x].ItemArray[5].ToString().Equals(tableBeam.Rows[i].ItemArray[0].ToString()))
+                    {
+                        Console.WriteLine("Hole：" + (holetable.Rows[x].ItemArray[0].ToString()));
+
+                        ContourPlate CP = new ContourPlate();
+
+                        if (holetable.Rows[x].ItemArray[1].ToString().Contains("@"))// 存在@
+                        {
+                            // 中心点
+                            string pc = holetable.Rows[x].ItemArray[1].ToString().Split('@')[1];
+                            pc = pc.Substring(1, pc.Length - 2);
+
+                            // 法线方向
+                            string n1s = holetable.Rows[x].ItemArray[1].ToString().Split('@')[2];
+                            n1s = n1s.Substring(1, n1s.Length - 2);
+
+                            //半径
+                            double rc = Convert.ToDouble(holetable.Rows[x].ItemArray[1].ToString().Split('@')[0]);
+                            Tekla.Structures.Geometry3d.Point center = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(pc.Split(',')[0]), Convert.ToDouble(pc.Split(',')[1]), Convert.ToDouble(pc.Split(',')[2]) + beam.StartPointOffset.Dz);
+
+
+                            double halfSideLength = rc / Math.Sqrt(2);
+
+                            Tekla.Structures.Geometry3d.Vector n1 = new Tekla.Structures.Geometry3d.Vector(Convert.ToDouble(n1s.Split(',')[0]), Convert.ToDouble(n1s.Split(',')[1]), Convert.ToDouble(n1s.Split(',')[2]));
+
+
+                            // 根据法向量计算矩形的四个点
+                            // 根据法向量计算矩形的四个点
+                            Tekla.Structures.Geometry3d.Vector rightDirection = n1.Cross(new Tekla.Structures.Geometry3d.Vector(0, 0, 1)).GetNormal();
+                            Tekla.Structures.Geometry3d.Vector upDirection = n1.Cross(rightDirection).GetNormal();
+
+                            Tekla.Structures.Geometry3d.Point p1 = center + rightDirection * halfSideLength - upDirection * halfSideLength;
+                            Tekla.Structures.Geometry3d.Point p2 = center + rightDirection * halfSideLength + upDirection * halfSideLength;
+                            Tekla.Structures.Geometry3d.Point p3 = center - rightDirection * halfSideLength + upDirection * halfSideLength;
+                            Tekla.Structures.Geometry3d.Point p4 = center - rightDirection * halfSideLength - upDirection * halfSideLength;
+
+
+
+                            // 创建切角对象
+                            Chamfer chamfer = new Chamfer(0, 0, Chamfer.ChamferTypeEnum.CHAMFER_ARC_POINT);
+
+                            // 在添加轮廓点时为其设置切角
+                            CP.AddContourPoint(new ContourPoint(p4, chamfer));
+                            CP.AddContourPoint(new ContourPoint(p3, chamfer));
+                            CP.AddContourPoint(new ContourPoint(p2, chamfer));
+                            CP.AddContourPoint(new ContourPoint(p1, chamfer));
+
+                            Cir_hole = Cir_hole + 1;
+
+
+                            List<double> sectionValues = phraseHSection(beam.Profile.ProfileString);
+                            //double H = sectionValues[0];
+                            double B = sectionValues[1];
+                            //double tw = sectionValues[2];
+                            //double tf = sectionValues[3];
+
+                            double D = Math.Round(2 * rc, 2);
+                            double pt;
+
+                            switch (D)
+                            {
+                                case 63.5:
+                                    pt = 6;
+                                    break;
+                                case 95:
+                                    pt = 7;
+                                    break;
+                                case 121:
+                                    pt = 8;
+                                    break;
+                                case 168:
+                                    pt = 10;
+                                    break;
+                                case 219:
+                                    pt = 10;
+                                    break;
+                                case 273:
+                                    pt = 10;
+                                    break;
+                                default:
+                                    pt = 1;
+                                    break;
+                            }
+
+
+                            Beam Hole_Pipe = new Beam();
+                            Hole_Pipe.Profile.ProfileString = "PIP" + D + "*" + pt;
+                            Hole_Pipe.Material.MaterialString = "Q235";
+
+                            Plane Web_Plane = new Plane();
+                            Web_Plane.Origin = beam.StartPoint;
+
+                            Tekla.Structures.Geometry3d.Vector v1 = new Tekla.Structures.Geometry3d.Vector(beam.StartPoint.X - beam.EndPoint.X, beam.StartPoint.Y - beam.EndPoint.Y, beam.StartPoint.Z - beam.EndPoint.Z);
+
+                            Web_Plane.AxisX = v1;
+                            Web_Plane.AxisY = Tekla.Structures.Geometry3d.Vector.Cross(v1, n1);
+
+                            Hole_Pipe.StartPoint = center + n1.GetNormal() * Convert.ToInt32(B) * 0.5;
+                            Hole_Pipe.EndPoint = center - n1.GetNormal() * Convert.ToInt32(B) * 0.5;
+
+                            Hole_Pipe.Position.Depth = Position.DepthEnum.MIDDLE;
+
+                            if (chkbox_hole_pipe.IsChecked == true)
+                            { Hole_Pipe.Insert(); }
+
+
+
+                        }
+                        else
+                        {
+                            string p1 = holetable.Rows[x].ItemArray[1].ToString().Substring(1, holetable.Rows[x].ItemArray[1].ToString().Length - 2);
+                            string p2 = holetable.Rows[x].ItemArray[2].ToString().Substring(1, holetable.Rows[x].ItemArray[2].ToString().Length - 2);
+                            string p3 = holetable.Rows[x].ItemArray[3].ToString().Substring(1, holetable.Rows[x].ItemArray[3].ToString().Length - 2);
+                            string p4 = holetable.Rows[x].ItemArray[4].ToString().Substring(1, holetable.Rows[x].ItemArray[4].ToString().Length - 2);
+
+
+
+
+                            Tekla.Structures.Geometry3d.Point Pt1 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p1.Split(',')[0]), Convert.ToDouble(p1.Split(',')[1]), Convert.ToDouble(p1.Split(',')[2]) + beam.StartPointOffset.Dz);
+                            Tekla.Structures.Geometry3d.Point Pt2 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p2.Split(',')[0]), Convert.ToDouble(p2.Split(',')[1]), Convert.ToDouble(p2.Split(',')[2]) + beam.StartPointOffset.Dz);
+                            Tekla.Structures.Geometry3d.Point Pt3 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p3.Split(',')[0]), Convert.ToDouble(p3.Split(',')[1]), Convert.ToDouble(p3.Split(',')[2]) + beam.StartPointOffset.Dz);
+                            Tekla.Structures.Geometry3d.Point Pt4 = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(p4.Split(',')[0]), Convert.ToDouble(p4.Split(',')[1]), Convert.ToDouble(p4.Split(',')[2]) + beam.StartPointOffset.Dz);
+
+                            if (Pt1 != Pt2)
+                            {
+
+                                ContourPoint point = new ContourPoint(Pt1, null);
+                                ContourPoint point1 = new ContourPoint(Pt2, null);
+                                ContourPoint point2 = new ContourPoint(Pt3, null);
+                                ContourPoint point3 = new ContourPoint(Pt4, null);
+
+
+                                CP.AddContourPoint(point);
+                                CP.AddContourPoint(point1);
+                                CP.AddContourPoint(point2);
+                                CP.AddContourPoint(point3);
+
+                                Rec_hole = Rec_hole + 1;
+                            }
+                        }
+
+                        CP.Finish = "FOO";
+                        CP.Profile.ProfileString = "PL800";
+                        CP.Material.MaterialString = "K30-2";
+                        CP.Class = BooleanPart.BooleanOperativeClassName;
+
+
+                        CP.Insert();
+
+                        Console.WriteLine("CP:" + CP.Identifier);
+                        BooleanPart Beam = new BooleanPart();
+
+                        Beam.Father = beam;
+
+                        Beam.SetOperativePart(CP);
+
+                        Beam.Insert();
+                        CP.Delete();
+
+
+
+                    }
+
+
+                }
+
+
+
+
+
+                #endregion
+
+
+                model.CommitChanges();
+
+            }
+            Output_Text.AppendText("生成模型 梁类型:" + ProfileList_beam_color.Count + "种,构件 " + T + "个 \n");
+
+            Output_Text.AppendText("包含梁上开洞" + (Rec_hole + Cir_hole) + "个：方" + Rec_hole + "/圆" + Cir_hole + "个 \n");
+
+
+            #endregion
+
+            #region 创建柱
+
+            cmd.CommandText = "SELECT*FROM MemberColumn";
+
+            SQLiteDataAdapter adapter = new SQLiteDataAdapter(cmd);
+            DataSet ds = new DataSet();
+            adapter.Fill(ds);
+
+            DataTable table = ds.Tables[0];
+
+            Model modelCo = new Model();
+
+            MonitorCheck form1 = new MonitorCheck();
+            form1.Show();
+            int T1 = 0;
+
+            for (int i = 0; i < table.Rows.Count; i++)
+            {
+
+                T1++;
+                form1.SetTextMesssage(T1, table.Rows.Count);//进度条函数
+
+
+
+
+
+                Beam column = new Beam();
+
+                string startStr = table.Rows[i].ItemArray[1].ToString().Substring(1, table.Rows[i].ItemArray[1].ToString().Length - 2);
+
+                string endStr = table.Rows[i].ItemArray[2].ToString().Substring(1, table.Rows[i].ItemArray[2].ToString().Length - 2);
+
+                string ProfileColumn_org = table.Rows[i].ItemArray[3].ToString().Split(' ').Last();
+                string ProfileColumn = ProfileColumn_org.Replace('X', '*');//.Substring(1);
+
+                ProfileColumn = Profile_Standardize(ProfileColumn, StandardProfileList);
+
+                //List<List<string>> StandardProfileList = Import_Standard_ProfileList();
+                //string ProfilePrex = Profile_Check(ProfileColumn, StandardProfileList);
+
+                string MaterialColumn = table.Rows[i].ItemArray[12].ToString();
+
+                column.StartPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(startStr.Split(',')[0]), Convert.ToDouble(startStr.Split(',')[1]), Convert.ToDouble(startStr.Split(',')[2]));
+
+                column.EndPoint = new Tekla.Structures.Geometry3d.Point(Convert.ToDouble(endStr.Split(',')[0]), Convert.ToDouble(endStr.Split(',')[1]), Convert.ToDouble(endStr.Split(',')[2]));
+
+                column.Profile.ProfileString = "";
+
+                for (int x = 0; x < profileL_Tekla.Count; x++)
+                {
+                    if (profileL_Tekla[x].ProfileName.Contains(ProfileColumn))
+                    {
+                        column.Profile.ProfileString = profileL_Tekla[x].ProfileName;//ProfileColumn;
+                    }
+                }
+
+                if (column.Profile.ProfileString == "")
+                {
+                    column.Profile.ProfileString = profileL_Tekla[1].ProfileName;
+                    column.Class = "99";
+
+                    //messagebox 显示 “截面缺失”+ProfileColumn
+                    System.Windows.Forms.MessageBox.Show("截面缺失" + ProfileColumn);
+                }
+
+                column.Position.Plane = Position.PlaneEnum.MIDDLE;
+
+
+
+
+                column.Position.Rotation = Position.RotationEnum.TOP;
+
+
+                column.Position.RotationOffset = Convert.ToDouble(table.Rows[i].ItemArray[11].ToString()) - 90;
+
+
+                int flag = 0;
+                for (int x = 0; x < materialL.Count; x++)
+                {
+                    if (materialL[x].MaterialName.Contains(MaterialColumn))
+                    {
+                        column.Material.MaterialString = MaterialColumn;
+                        flag++;
+                    }
+                }
+                if (flag == 0)
+                {
+                    column.Material.MaterialString = combox_mat_column.SelectedItem.ToString();
+                }
+
+
+                // 根据combo_color的选择，建立switch case是"构件区分"，和case是"截面区分”
+                switch (combo_color.SelectionBoxItem.ToString())
+                {
+                    case "梁柱区分":
+                        column.Class = "3";
+                        break;
+                    case "截面区分":
+
+
+                        int color_index = 0;
+                        try
+                        { color_index = ProfileList_column_color[column.Profile.ProfileString]; }
+                        catch (Exception)
+                        { System.Windows.Forms.MessageBox.Show("检查截面" + ProfileColumn); }
+
+                        column.Class = color_index.ToString();
+
+
+                        break;
+                }
+
+                column.Name = "column";
+
+
+                if (column.Profile.ProfileString != "")
+                {
+                    column.Insert();
+                }
+
+
+
+
+                modelCo.CommitChanges();
+            }
+
+            Output_Text.AppendText("生成模型 柱类型:" + ProfileList_column_color.Count + "种，构件" + T1 + "个\n");
+
+
+            #endregion
+
+
+
+
+
+
+            conn.Close();
+        
         }
+
+
+
+    }
+
+
+
+
 
 
 
@@ -2109,7 +2114,7 @@ namespace TestTekla
             while (selectedObjects.MoveNext())
             {
                 Beam selectedBeam = new Beam();
-                Beam item  = selectedObjects.Current as Beam;
+                Beam item = selectedObjects.Current as Beam;
 
                 try
                 {
