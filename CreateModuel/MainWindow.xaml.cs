@@ -121,6 +121,7 @@ namespace TestTekla
 
                 //ProfileList 新模型所需截面
 
+
                 List<List<string>> StandardProfileList = Import_Standard_ProfileList("H");
                 //import beam section
 
