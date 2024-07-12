@@ -131,6 +131,7 @@ namespace TestTekla
                 DataTable profileColumData = getData(sqlColumn, cmd);
 
 
+
                 string sqlTag = "SELECT*FROM Tag";
 
                 DataTable tagData = getData(sqlTag, cmd);
