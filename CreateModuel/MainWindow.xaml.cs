@@ -122,6 +122,7 @@ namespace TestTekla
 
                 cmd.Connection = conn;
 
+
                 string sqlBeam = "SELECT*FROM SectPropertyBeam";
 
                 DataTable profileBeamData = getData(sqlBeam, cmd);
